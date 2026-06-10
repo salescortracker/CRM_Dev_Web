@@ -1,0 +1,49 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Notification center</p>
+      <h1>Notifications</h1>
+      <p>Review alerts across leads, deals, meetings, invoices, APIs, and support SLAs.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="markAllRead()">Mark All Read</button>
+    </div>
+  </div>
+
+  <div class="notification-layout">
+    <section class="panel">
+      <div class="category-tabs">
+        <button type="button" *ngFor="let category of categories" [class.active]="activeCategory === category" (click)="activeCategory = category">
+          {{ category }}
+        </button>
+      </div>
+      <article class="notification-row" *ngFor="let notification of filteredNotifications" [class.unread]="!notification.read" [class.muted]="notification.muted">
+        <div>
+          <strong>{{ notification.title }}</strong>
+          <span>{{ notification.detail }}</span>
+          <small>{{ notification.category }} | {{ notification.priority }} | {{ notification.time }}</small>
+        </div>
+        <div class="row-actions">
+          <button type="button" (click)="openRelated(notification)">Open</button>
+          <button type="button" (click)="markRead(notification)">Read</button>
+          <button type="button" (click)="toggleMute(notification)">{{ notification.muted ? 'Unmute' : 'Mute' }}</button>
+        </div>
+      </article>
+    </section>
+
+    <aside class="panel settings-panel">
+      <h2>Delivery Settings</h2>
+      <p>{{ unreadCount }} unread alerts need attention.</p>
+      <article class="setting-row" *ngFor="let setting of settings">
+        <div>
+          <strong>{{ setting.channel }}</strong>
+          <span>{{ setting.detail }}</span>
+        </div>
+        <button type="button" [class.enabled]="setting.enabled" (click)="toggleSetting(setting)">
+          {{ setting.enabled ? 'On' : 'Off' }}
+        </button>
+      </article>
+    </aside>
+  </div>
+</div>

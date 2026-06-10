@@ -1,0 +1,249 @@
+<div class="plans-page">
+  <div class="toast" *ngIf="activityMessage">
+    <i class="fas fa-check"></i>
+    {{ activityMessage }}
+  </div>
+
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb">
+        <span>Super Admin</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="crumb-active">Plans</span>
+      </div>
+      <h1 class="page-title">Plans &amp; Pricing</h1>
+      <p class="page-subtitle">Define what each tier unlocks. Subscriptions assign a plan to a tenant.</p>
+
+      <div class="stat-pills">
+        <span class="pill"><i class="fas fa-layer-group"></i><span>Total:</span><strong>{{ totalPlans }}</strong></span>
+        <span class="pill"><i class="fas fa-power-off"></i><span>Active:</span><strong>{{ activePlans }}</strong></span>
+        <span class="pill"><i class="fas fa-bolt"></i><span>API-enabled:</span><strong>{{ apiEnabledPlans }}</strong></span>
+        <span class="pill"><i class="fas fa-database"></i><span>Top storage:</span><strong>{{ topStorage }}</strong></span>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <button class="btn btn-outline" type="button" (click)="goToSubscriptions()">
+        <i class="far fa-credit-card"></i>
+        Subscriptions
+      </button>
+      <button class="btn btn-primary" type="button" (click)="openAddForm()">
+        <i class="fas fa-plus"></i>
+        Add Plan
+      </button>
+    </div>
+  </div>
+
+  <div class="card-grid">
+    <section
+      class="plan-card"
+      *ngFor="let plan of plans; trackBy: trackByPlanId"
+      [class.popular]="isPopular(plan)">
+      <span class="accent-bar" [ngClass]="'bar-' + plan.accent"></span>
+      <span class="popular-ribbon" *ngIf="isPopular(plan)">Popular</span>
+
+      <div class="card-body">
+        <div class="card-head">
+          <span class="plan-icon" [ngClass]="'soft-' + plan.accent">
+            <i class="fas" [ngClass]="{
+              'fa-gift': plan.accent === 'slate',
+              'fa-rocket': plan.accent === 'blue',
+              'fa-gem': plan.accent === 'purple',
+              'fa-crown': plan.accent === 'rose'
+            }"></i>
+          </span>
+          <div class="card-head-text">
+            <h3>{{ plan.name }}</h3>
+            <span class="plan-status" [class.status-active]="plan.status === 'Active'" [class.status-draft]="plan.status === 'Draft'">
+              <span></span>
+              {{ plan.status }}
+            </span>
+          </div>
+        </div>
+
+        <div class="price-row">
+          <strong>{{ plan.price === 0 ? 'Free' : formatMoney(plan.price) }}</strong>
+          <span *ngIf="plan.price > 0">/mo</span>
+        </div>
+        <p class="plan-desc">{{ plan.description }}</p>
+
+        <div class="limits-grid">
+          <div class="limit-box">
+            <i class="fas fa-users"></i>
+            <strong>{{ limitLabel(plan.userLimit) }}</strong>
+            <span>Users</span>
+          </div>
+          <div class="limit-box">
+            <i class="fas fa-database"></i>
+            <strong>{{ storageLabel(plan.storageLimit) }}</strong>
+            <span>Storage</span>
+          </div>
+          <div class="limit-box">
+            <i class="fas fa-bolt"></i>
+            <strong>{{ limitLabel(plan.apiLimit) }}</strong>
+            <span>API</span>
+          </div>
+        </div>
+
+        <div class="feature-list">
+          <div class="feature-line" *ngFor="let feature of enabledFeatures(plan).slice(0, 4)">
+            <i class="fas fa-check" [ngClass]="'text-' + plan.accent"></i>
+            <span>{{ feature }}</span>
+          </div>
+          <p class="feature-more" *ngIf="enabledFeatures(plan).length > 4">+{{ enabledFeatures(plan).length - 4 }} more</p>
+          <p class="feature-empty" *ngIf="enabledFeatures(plan).length === 0">No features enabled</p>
+        </div>
+
+        <div class="card-actions">
+          <button class="btn btn-outline btn-block" type="button" (click)="openEditForm(plan)">
+            <i class="far fa-edit"></i>
+            Edit
+          </button>
+          <button
+            class="btn btn-block"
+            type="button"
+            [class.btn-ghost]="plan.status === 'Active'"
+            [class.btn-primary]="plan.status === 'Draft'"
+            (click)="toggleStatus(plan)">
+            <ng-container *ngIf="plan.status === 'Active'">
+              <i class="fas fa-pause"></i>
+              Draft
+            </ng-container>
+            <ng-container *ngIf="plan.status === 'Draft'">
+              <i class="fas fa-power-off"></i>
+              Activate
+            </ng-container>
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <section class="matrix-card">
+    <div class="matrix-header">
+      <div>
+        <h2>Feature Comparison</h2>
+        <p>Click any cell to enable or disable a feature for that plan.</p>
+      </div>
+      <span>{{ allFeatures.length }} features</span>
+    </div>
+
+    <div class="matrix-scroll">
+      <table class="matrix-table">
+        <thead>
+          <tr>
+            <th class="sticky-col feature-col">Feature</th>
+            <th *ngFor="let plan of plans; trackBy: trackByPlanId">
+              <span class="th-plan-name">{{ plan.name }}</span>
+              <span class="th-plan-price" [ngClass]="['soft-' + plan.accent, 'ring-' + plan.accent]">{{ priceLabel(plan) }}</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let feature of allFeatures; trackBy: trackByFeature; let i = index" [class.row-alt]="i % 2 === 1">
+            <td class="sticky-col feature-col">{{ feature }}</td>
+            <td *ngFor="let plan of plans; trackBy: trackByPlanId">
+              <button
+                class="cell-toggle"
+                type="button"
+                [class.cell-on]="plan.features[feature]"
+                [class.cell-off]="!plan.features[feature]"
+                [title]="(plan.features[feature] ? 'Disable ' : 'Enable ') + feature + ' for ' + plan.name"
+                (click)="toggleFeature(plan, feature)">
+                <i class="fas" [ngClass]="plan.features[feature] ? 'fa-check' : 'fa-minus'"></i>
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="matrix-footer">
+      <button class="link-btn" type="button" (click)="goToSubscriptions()">
+        Assign these plans to tenants in Subscriptions
+        <i class="fas fa-arrow-up-right-from-square"></i>
+      </button>
+    </div>
+  </section>
+
+  <div class="modal-overlay" *ngIf="formOpen">
+    <section class="modal">
+      <div class="modal-header">
+        <div>
+          <h2>{{ isEditing ? 'Edit Plan' : 'Add Plan' }}</h2>
+          <p>{{ isEditing ? 'Update pricing, limits, and access.' : 'Create a new subscription tier.' }}</p>
+        </div>
+        <button class="icon-btn" type="button" (click)="closeForm()"><i class="fas fa-times"></i></button>
+      </div>
+
+      <div class="modal-body">
+        <label class="field">
+          <span>Plan Name *</span>
+          <input [(ngModel)]="form.name" placeholder="Premium" />
+        </label>
+
+        <label class="field">
+          <span>Description</span>
+          <textarea rows="3" [(ngModel)]="form.description" placeholder="Plan description"></textarea>
+        </label>
+
+        <div class="grid-2">
+          <label class="field">
+            <span>Price (INR / month)</span>
+            <input type="number" [(ngModel)]="form.price" />
+          </label>
+          <label class="field">
+            <span>Status</span>
+            <select [(ngModel)]="form.status">
+              <option value="Active">Active</option>
+              <option value="Draft">Draft</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>User Limit (-1 = Unlimited)</span>
+            <input type="number" [(ngModel)]="form.userLimit" />
+          </label>
+          <label class="field">
+            <span>Storage Limit (GB)</span>
+            <input type="number" [(ngModel)]="form.storageLimit" />
+          </label>
+          <label class="field">
+            <span>API Limit (-1 = Unlimited)</span>
+            <input type="number" [(ngModel)]="form.apiLimit" />
+          </label>
+          <label class="field">
+            <span>Accent</span>
+            <select [(ngModel)]="form.accent">
+              <option *ngFor="let accent of accentKeys" [value]="accent">{{ accent | titlecase }}</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="form-section">
+          <p class="section-label">Feature Access</p>
+          <div class="feature-toggle-grid">
+            <button
+              class="feature-toggle"
+              type="button"
+              *ngFor="let feature of allFeatures; trackBy: trackByFeature"
+              [class.toggle-on]="form.features[feature]"
+              (click)="toggleFormFeature(feature)">
+              <span>{{ feature }}</span>
+              <span class="ft-check" [class.ft-check-on]="form.features[feature]">
+                <i class="fas" [ngClass]="form.features[feature] ? 'fa-check' : 'fa-minus'"></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-outline" type="button" (click)="closeForm()">Cancel</button>
+        <button class="btn btn-primary" type="button" (click)="savePlan()">
+          <i class="far fa-save"></i>
+          {{ isEditing ? 'Save Changes' : 'Create Plan' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

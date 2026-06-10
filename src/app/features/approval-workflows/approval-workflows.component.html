@@ -1,0 +1,73 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Approval workflows</p>
+      <h1>Approvals</h1>
+      <p>Manage deal, discount, invoice, and expense approvals with multi-level routing.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Pending</span><strong>{{ pendingCount }}</strong></div>
+    <div><span>Escalated</span><strong>{{ escalatedCount }}</strong></div>
+    <div><span>Active rules</span><strong>{{ rules.length }}</strong></div>
+  </div>
+
+  <div class="approval-layout">
+    <section class="panel">
+      <h2>Approval Queue</h2>
+      <article
+        class="request-row"
+        *ngFor="let request of requests"
+        [class.active]="selectedRequestId === request.id"
+        [class.escalated]="request.status === 'Escalated'"
+        (click)="selectedRequestId = request.id">
+        <div>
+          <strong>{{ request.title }}</strong>
+          <span>{{ request.relatedName }} | {{ request.amount | currency:'USD':'symbol':'1.0-0' }}</span>
+        </div>
+        <b>{{ request.status }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedRequest.type }}</p>
+      <h2>{{ selectedRequest.title }}</h2>
+      <p>{{ selectedRequest.reason }}</p>
+      <div class="detail-grid">
+        <div><span>Requested by</span><strong>{{ selectedRequest.requestedBy }}</strong></div>
+        <div><span>Approver</span><strong>{{ selectedRequest.currentApprover }}</strong></div>
+        <div><span>Amount</span><strong>{{ selectedRequest.amount | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+        <div><span>Status</span><strong>{{ selectedRequest.status }}</strong></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-success" type="button" (click)="approve(selectedRequest)">Approve</button>
+        <button class="btn btn-outline-danger" type="button" (click)="reject(selectedRequest)">Reject</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="escalate(selectedRequest)">Escalate</button>
+        <button class="btn btn-danger" type="button" (click)="openRelated(selectedRequest)">Open Related</button>
+      </div>
+      <div class="timeline">
+        <article *ngFor="let item of selectedRequest.timeline">
+          <strong>{{ item.actor }}</strong>
+          <span>{{ item.note }}</span>
+          <small>{{ item.time }}</small>
+        </article>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Workflow Rules</h2>
+      <input class="form-control" [(ngModel)]="newRuleName" placeholder="Rule name">
+      <input class="form-control" [(ngModel)]="newRuleCondition" placeholder="Condition">
+      <button class="btn btn-danger w-100" type="button" (click)="addRule()">Add Rule</button>
+      <article class="rule-row" *ngFor="let rule of rules" [class.active]="selectedRuleId === rule.id" (click)="selectedRuleId = rule.id">
+        <div>
+          <strong>{{ rule.name }}</strong>
+          <span>{{ rule.condition }} | {{ rule.levels.join(' > ') }}</span>
+        </div>
+        <button type="button" (click)="toggleRule(rule); $event.stopPropagation()">{{ rule.active ? 'On' : 'Off' }}</button>
+      </article>
+    </section>
+  </div>
+</div>

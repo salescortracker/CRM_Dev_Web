@@ -1,0 +1,231 @@
+<div class="users-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Access control</p>
+      <h1>Users</h1>
+      <p class="page-subtitle">Manage CRM users, ownership, permissions, and the work assigned across the sales flow.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="openAddUserPanel()">
+        <i class="fas fa-user-plus"></i>
+        Add User
+      </button>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <span>Total users</span>
+      <strong>{{ totalUsers }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Active users</span>
+      <strong>{{ activeUsers }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Admins</span>
+      <strong>{{ adminUsers }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Open tasks owned</span>
+      <strong>{{ totalOpenTasks }}</strong>
+    </div>
+  </div>
+
+  <div class="users-shell" [class.profile-open]="detailMode">
+    <aside class="user-sidebar" *ngIf="detailMode">
+      <div class="sidebar-head">
+        <span>Team</span>
+        <button type="button" class="icon-button" (click)="closeUserProfile()" title="Close profile">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <button
+        class="name-row"
+        type="button"
+        *ngFor="let user of users"
+        [class.active]="selectedUser?.id === user.id"
+        (click)="selectUser(user)">
+        <span>{{ user.firstName }} {{ user.lastName }}</span>
+        <small>{{ user.role | titlecase }}</small>
+      </button>
+    </aside>
+
+    <section class="directory-panel" *ngIf="!detailMode">
+      <div class="section-toolbar">
+        <div>
+          <h2>User Directory</h2>
+          <p>Click any user row to view ownership, permissions, and CRM actions.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" (click)="openAddUserPanel()">Invite teammate</button>
+      </div>
+
+      <div class="users-table">
+        <div class="table-head">
+          <span>User</span>
+          <span>Role</span>
+          <span>Department</span>
+          <span>Permission</span>
+          <span>Owned deals</span>
+          <span>Open tasks</span>
+          <span>Pipeline</span>
+          <span>Status</span>
+        </div>
+        <button class="table-row" type="button" *ngFor="let user of users" (click)="selectUser(user)">
+          <span class="user-cell">
+            <b class="avatar">{{ getInitials(user) }}</b>
+            <span>
+              <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+              <small>{{ user.email }}</small>
+            </span>
+          </span>
+          <span><em class="role-badge" [ngClass]="getRoleClass(user.role)">{{ user.role | titlecase }}</em></span>
+          <span>{{ user.department }}</span>
+          <span>{{ user.permissionGroup }}</span>
+          <span>{{ user.ownedDeals }}</span>
+          <span>{{ user.openTasks }}</span>
+          <span>{{ user.pipelineValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span><em class="status-badge" [class.inactive]="!user.active">{{ user.active ? 'Active' : 'Inactive' }}</em></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="user-profile" *ngIf="detailMode && selectedUser">
+      <div class="profile-hero">
+        <div class="profile-identity">
+          <b class="avatar large">{{ getInitials(selectedUser) }}</b>
+          <div>
+            <p class="eyebrow">{{ selectedUser.permissionGroup }}</p>
+            <h2>{{ selectedUser.firstName }} {{ selectedUser.lastName }}</h2>
+            <p>{{ selectedUser.email }} | {{ selectedUser.department }}</p>
+          </div>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-danger" type="button" (click)="editUser(selectedUser)">Edit User</button>
+          <button class="btn btn-outline-secondary" type="button" (click)="closeUserProfile()">Close</button>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div><span>Owned deals</span><strong>{{ selectedUser.ownedDeals }}</strong></div>
+        <div><span>Open tasks</span><strong>{{ selectedUser.openTasks }}</strong></div>
+        <div><span>Pipeline</span><strong>{{ selectedUser.pipelineValue | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+        <div><span>Status</span><strong>{{ selectedUser.active ? 'Active' : 'Inactive' }}</strong></div>
+      </div>
+
+      <div class="profile-columns">
+        <div class="info-panel">
+          <h3>User Details</h3>
+          <div class="info-list">
+            <span>Role</span><strong>{{ selectedUser.role | titlecase }}</strong>
+            <span>Phone</span><strong>{{ selectedUser.phone || 'Not added' }}</strong>
+            <span>Department</span><strong>{{ selectedUser.department }}</strong>
+            <span>Permission</span><strong>{{ selectedUser.permissionGroup }}</strong>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3>Field Access Control</h3>
+          <label class="access-row" *ngFor="let field of fieldAccessOptions">
+            <input type="checkbox" [(ngModel)]="field.enabled">
+            <span>{{ field.label }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="permission-card">
+        <div class="section-label">
+          <h3>Permission Group</h3>
+          <span>Current access: {{ selectedUser.permissionGroup }}</span>
+        </div>
+        <div class="permission-options">
+          <button
+            class="permission-option"
+            *ngFor="let group of permissionGroups"
+            [class.active]="selectedUser.permissionGroup === group"
+            type="button"
+            (click)="assignPermissionGroup(selectedUser, group)">
+            <i class="fas" [ngClass]="selectedUser.permissionGroup === group ? 'fa-check-circle' : 'fa-circle'"></i>
+            <span>{{ group }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="actions-card">
+        <div class="section-label">
+          <h3>User Actions</h3>
+          <span>Manage this user without changing the selected permission accidentally.</span>
+        </div>
+        <div class="action-grid">
+          <button class="btn btn-outline-secondary" type="button" (click)="toggleUser(selectedUser)">
+            {{ selectedUser.active ? 'Deactivate' : 'Activate' }}
+          </button>
+          <button class="btn btn-outline-secondary" type="button" (click)="openDeals()">Owned Deals</button>
+          <button class="btn btn-outline-secondary" type="button" (click)="openTasks()">Open Tasks</button>
+          <button class="btn btn-outline-danger" type="button" (click)="deleteUser(selectedUser.id)">Remove</button>
+        </div>
+      </div>
+    </section>
+
+    <aside
+      class="user-editor"
+      *ngIf="showUserPanel"
+      [ngStyle]="getPanelStyle()"
+      (document:mousemove)="onPanelDrag($event)"
+      (document:mouseup)="stopPanelDrag()"
+      (document:touchmove)="onPanelDrag($event)"
+      (document:touchend)="stopPanelDrag()">
+      <div
+        class="editor-head draggable"
+        (mousedown)="startPanelDrag($event)"
+        (touchstart)="startPanelDrag($event)">
+        <div>
+          <p class="eyebrow">{{ editingUserId ? 'Edit access' : 'Invite user' }}</p>
+          <h2>{{ editingUserId ? 'Edit User' : 'Add User' }}</h2>
+        </div>
+        <button type="button" class="icon-button" (mousedown)="$event.stopPropagation()" (touchstart)="$event.stopPropagation()" (click)="closeUserPanel()" title="Close form">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <label>Email</label>
+      <input class="form-control" placeholder="Email" [(ngModel)]="newUser.email">
+
+      <div class="split-fields">
+        <div>
+          <label>First name</label>
+          <input class="form-control" placeholder="First name" [(ngModel)]="newUser.firstName">
+        </div>
+        <div>
+          <label>Last name</label>
+          <input class="form-control" placeholder="Last name" [(ngModel)]="newUser.lastName">
+        </div>
+      </div>
+
+      <label>Role</label>
+      <select class="form-control" [(ngModel)]="newUser.role">
+        <option [ngValue]="undefined">Select role</option>
+        <option *ngFor="let role of roles" [value]="role">{{ role | titlecase }}</option>
+      </select>
+
+      <label>Permission group</label>
+      <select class="form-control" [(ngModel)]="newUser.permissionGroup">
+        <option [ngValue]="undefined">Permission group</option>
+        <option *ngFor="let group of permissionGroups" [value]="group">{{ group }}</option>
+      </select>
+
+      <label>Department</label>
+      <input class="form-control" placeholder="Department" [(ngModel)]="newUser.department">
+
+      <label>Phone</label>
+      <input class="form-control" placeholder="Phone" [(ngModel)]="newUser.phone">
+
+      <div class="form-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="closeUserPanel()">Cancel</button>
+        <button *ngIf="!editingUserId" class="btn btn-danger" type="button" (click)="saveUser()">Add User</button>
+        <button *ngIf="editingUserId" class="btn btn-danger" type="button" (click)="updateUser()">Update</button>
+      </div>
+    </aside>
+  </div>
+</div>

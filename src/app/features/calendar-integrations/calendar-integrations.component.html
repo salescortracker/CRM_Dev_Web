@@ -1,0 +1,100 @@
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Meetings & calendar</p>
+      <h1>Calendar Integrations</h1>
+      <p>Connect calendars, schedule meetings, sync reminders, and manage Zoom/Teams links.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Connected apps</span><strong>{{ connectedCount }}</strong></div>
+    <div><span>Upcoming meetings</span><strong>{{ meetings.length }}</strong></div>
+  </div>
+
+  <div class="calendar-layout">
+    <section class="panel">
+      <h2>Integration Status</h2>
+      <button class="provider-row" type="button" *ngFor="let provider of providers" [class.connected]="provider.status === 'Connected'" (click)="toggleProvider(provider)">
+        <i class="fas" [ngClass]="provider.type === 'Calendar' ? 'fa-calendar-days' : 'fa-video'"></i>
+        <span><strong>{{ provider.name }}</strong><small>{{ provider.lastSync }}</small></span>
+        <em>{{ provider.status }}</em>
+      </button>
+    </section>
+
+    <section class="panel">
+      <h2>Schedule CRM Meeting</h2>
+      <label>Meeting title</label><input class="form-control" [(ngModel)]="meetingTitle">
+      <div class="split">
+        <label>Related to
+          <select class="form-control" [(ngModel)]="selectedRelatedType" (change)="onRelatedTypeChange()">
+            <option *ngFor="let type of relatedTypes" [value]="type">{{ type }}</option>
+          </select>
+        </label>
+        <label>CRM record
+          <select class="form-control" [(ngModel)]="selectedRelatedId" (change)="onRelatedRecordChange()">
+            <option *ngFor="let record of filteredRelatedRecords" [value]="record.id">{{ record.name }}</option>
+          </select>
+        </label>
+      </div>
+      <label>Meeting purpose</label>
+      <select class="form-control" [(ngModel)]="selectedPurpose">
+        <option *ngFor="let purpose of purposes" [value]="purpose">{{ purpose }}</option>
+      </select>
+      <div class="conflict-panel" *ngIf="matchingUpcomingMeetings.length">
+        <div class="conflict-head">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span>{{ matchingUpcomingMeetings.length }} upcoming meeting{{ matchingUpcomingMeetings.length === 1 ? '' : 's' }} already scheduled for this record</span>
+          <button type="button" (click)="showMatchingMeetings = !showMatchingMeetings">
+            {{ showMatchingMeetings ? 'Hide' : 'View' }}
+          </button>
+        </div>
+        <p class="conflict-note" *ngIf="showMatchingMeetings">Review existing meetings before creating another schedule for the same CRM record.</p>
+        <div class="conflict-row" *ngFor="let meeting of matchingUpcomingMeetings" [hidden]="!showMatchingMeetings">
+          <span>
+            <strong>{{ meeting.title }}</strong>
+            <small>{{ meeting.date }} {{ meeting.time }} | {{ meeting.provider }} | {{ meeting.purpose }}</small>
+            <small>Owner: {{ meeting.owner }} | Status: {{ meeting.status }}</small>
+          </span>
+          <div>
+            <button type="button" (click)="openRelated(meeting)">Open Related Record</button>
+            <button type="button" (click)="createFollowUpTask(meeting)">Create Follow-up Task</button>
+          </div>
+        </div>
+      </div>
+      <div class="split">
+        <label>Date<input class="form-control" type="date" [(ngModel)]="meetingDate"></label>
+        <label>Time<input class="form-control" type="time" [(ngModel)]="meetingTime"></label>
+      </div>
+      <label>Provider</label>
+      <select class="form-control" [(ngModel)]="selectedProvider">
+        <option *ngFor="let provider of providers" [value]="provider.name">{{ provider.name }}</option>
+      </select>
+      <button class="btn btn-danger w-100 mt-3" type="button" (click)="scheduleMeeting()">Schedule Meeting</button>
+    </section>
+
+    <section class="panel meetings-panel">
+      <div class="section-title">
+        <h2>Upcoming CRM Meetings</h2>
+        <p>Meetings pulled from leads, contacts, companies, deals, negotiations, and tasks.</p>
+      </div>
+      <div class="meeting-row" *ngFor="let meeting of meetings">
+        <span>
+          <strong>{{ meeting.title }}</strong>
+          <small>{{ meeting.relatedType }} -> {{ meeting.relatedName }} | {{ meeting.purpose }}</small>
+          <small>{{ meeting.contact }} | Owner: {{ meeting.owner }} | {{ meeting.provider }} | {{ meeting.reminder }}</small>
+        </span>
+        <em>{{ meeting.date }} {{ meeting.time }}</em>
+        <i class="meeting-status" [class.done]="meeting.status === 'Completed'" [class.prep]="meeting.status === 'Needs Prep'">{{ meeting.status }}</i>
+        <div class="meeting-actions">
+          <button type="button" title="Open related record" (click)="openRelated(meeting)"><i class="fas fa-arrow-up-right-from-square"></i></button>
+          <button type="button" title="Create follow-up task" (click)="createFollowUpTask(meeting)"><i class="fas fa-list-check"></i></button>
+          <button type="button" title="Log meeting activity" (click)="logActivity(meeting)"><i class="fas fa-clipboard-check"></i></button>
+          <button type="button" title="Mark complete" (click)="markComplete(meeting)"><i class="fas fa-check"></i></button>
+        </div>
+        <b>{{ meeting.nextAction }}</b>
+      </div>
+    </section>
+  </div>
+</div>

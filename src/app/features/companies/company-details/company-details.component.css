@@ -1,0 +1,21 @@
+.metric {
+  padding: 15px;
+}
+
+.metric-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+}
+
+.metric-label {
+  font-size: 12px;
+  color: #999;
+  text-transform: uppercase;
+  margin-top: 5px;
+}
+
+.address-card {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0 !important;
+}

@@ -1,0 +1,39 @@
+<div class="container-fluid py-4">
+  <h2>Merge Contacts</h2>
+  <div class="card">
+    <div class="card-body">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Select a primary contact and one or more secondary contacts to merge.
+      </div>
+      
+      <div class="form-group mb-3">
+        <label>Primary Contact (keep this)</label>
+        <select class="form-select" [(ngModel)]="selectedPrimary" (change)="onPrimarySelect()">
+          <option value="">Choose primary contact...</option>
+          <option *ngFor="let contact of allContacts" [value]="contact.id">
+            {{ contact.firstName }} {{ contact.lastName }} ({{ contact.email }})
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group mb-3">
+        <label>Merge Into (secondary contacts)</label>
+        <div class="list-group" *ngIf="availableSecondary.length > 0">
+          <label *ngFor="let contact of availableSecondary" class="list-group-item">
+            <input type="checkbox" [(ngModel)]="contact.selected" class="me-2">
+            {{ contact.firstName }} {{ contact.lastName }} ({{ contact.email }})
+          </label>
+        </div>
+        <div *ngIf="availableSecondary.length === 0" class="alert alert-secondary">
+          Select a primary contact first
+        </div>
+      </div>
+
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary" (click)="mergeContacts()">Merge Selected</button>
+        <button class="btn btn-secondary" (click)="cancelMerge()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,276 @@
+<div class="negotiation-page reference-negotiation-page">
+  <div *ngIf="loading" class="loading-state">
+    <span class="spinner-border"></span>
+    Loading negotiation
+  </div>
+
+  <ng-container *ngIf="!loading && deal">
+    <div class="page-header reference-negotiation-header">
+      <div class="negotiation-title-row">
+        <button class="link-button" type="button" (click)="openDeal()">
+          <i class="fas fa-arrow-left"></i>
+          Back to Deal Profile
+        </button>
+        <span class="deal-avatar">{{ companyInitials }}</span>
+        <h1>{{ deal.name }}</h1>
+      </div>
+      <div class="header-actions">
+        <span class="status-pill" *ngIf="message">{{ message }}</span>
+        <button class="btn btn-outline-secondary" type="button" (click)="viewProducts()">
+          <i class="fas fa-box"></i>
+          View Products & Quote
+        </button>
+        <button class="btn btn-danger" type="button" (click)="sendProposal()">
+          <i class="fas fa-paper-plane"></i>
+          Send Proposal
+        </button>
+        <button class="btn btn-outline-success" type="button" (click)="closeWon()">
+          <i class="fas fa-check"></i>
+          Mark Won
+        </button>
+        <button class="btn btn-outline-danger" type="button" (click)="closeLost()">
+          <i class="fas fa-times"></i>
+          Mark Lost
+        </button>
+      </div>
+    </div>
+
+    <section class="connected-flow">
+      <button type="button" (click)="openDeal()">
+        <i class="fas fa-briefcase"></i>
+        Company Account
+      </button>
+      <i class="fas fa-chevron-right"></i>
+      <button type="button" (click)="viewProducts()">
+        <i class="fas fa-box"></i>
+        Products & Quote
+      </button>
+      <i class="fas fa-chevron-right"></i>
+      <span>
+        <i class="fas fa-handshake"></i>
+        Negotiation
+      </span>
+    </section>
+
+    <div class="snapshot-grid reference-hidden-snapshot">
+      <section class="snapshot-card">
+        <span>Status</span>
+        <strong class="badge" [class]="'bg-' + getStatusColor(deal.status)">{{ getStatusLabel(deal.status) | titlecase }}</strong>
+      </section>
+      <section class="snapshot-card">
+        <span>Quote</span>
+        <strong>{{ deal.quoteId || 'Not created' }}</strong>
+      </section>
+      <section class="snapshot-card">
+        <span>Invoice</span>
+        <strong>{{ deal.invoiceId || 'Not created' }}</strong>
+      </section>
+      <section class="snapshot-card">
+        <span>Payment</span>
+        <strong class="badge" [class]="'bg-' + getPaymentStatusColor(deal.paymentStatus)">{{ deal.paymentStatus || 'Pending' }}</strong>
+      </section>
+    </div>
+
+    <section class="note-panel schedule-panel" *ngIf="showSchedulePanel">
+      <div class="schedule-panel-header">
+        <div>
+          <h2>Schedule negotiation meeting</h2>
+          <p>{{ deal.name }} | {{ selectedNote?.negotiationPoint || 'Final terms' }}</p>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary" type="button" (click)="showSchedulePanel = false">Close</button>
+      </div>
+
+      <div class="inline-meeting-warning" *ngIf="getDealMeetings().length">
+        <div class="warning-head">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span>{{ getDealMeetings().length }} upcoming negotiation meeting already scheduled.</span>
+          <button type="button" (click)="showUpcomingMeetings = !showUpcomingMeetings">{{ showUpcomingMeetings ? 'Hide' : 'View' }}</button>
+        </div>
+        <div class="warning-meeting-row" *ngFor="let meeting of getDealMeetings()" [hidden]="!showUpcomingMeetings">
+          <strong>{{ meeting.title }}</strong>
+          <span>{{ meeting.date }} at {{ meeting.time }} | {{ meeting.provider }} | Owner: {{ meeting.owner }}</span>
+        </div>
+      </div>
+
+      <div class="meeting-provider-grid">
+        <button
+          type="button"
+          *ngFor="let provider of meetingProviders"
+          class="meeting-provider"
+          [class.active]="meetingProvider === provider.name"
+          [class.disabled]="!provider.connected"
+          [disabled]="!provider.connected"
+          (click)="selectMeetingProvider(provider.name)">
+          <i class="fas" [ngClass]="provider.icon"></i>
+          <span>{{ provider.name }}</span>
+          <small>{{ provider.connected ? 'Connected' : 'Not connected' }}</small>
+        </button>
+      </div>
+
+      <div class="schedule-form-grid">
+        <select class="form-control" [(ngModel)]="meetingPurpose">
+          <option *ngFor="let purpose of meetingPurposes" [value]="purpose">{{ purpose }}</option>
+        </select>
+        <select class="form-control" [(ngModel)]="meetingReminder">
+          <option>15 minutes before</option>
+          <option>30 minutes before</option>
+          <option>1 hour before</option>
+          <option>1 day before</option>
+        </select>
+        <input class="form-control" type="date" [(ngModel)]="meetingDate">
+        <input class="form-control" type="time" [(ngModel)]="meetingTime">
+      </div>
+      <textarea class="form-control" rows="3" [(ngModel)]="meetingNotes" placeholder="Negotiation agenda"></textarea>
+      <div class="form-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="showSchedulePanel = false">Cancel</button>
+        <button class="btn btn-danger" type="button" (click)="saveMeeting()">Schedule Meeting</button>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <main class="timeline-column">
+        <section class="note-panel add-note-card">
+          <div class="section-heading">
+            <div>
+              <h2>Add Negotiation Note</h2>
+            </div>
+          </div>
+
+          <form *ngIf="showNoteForm" class="note-form" (ngSubmit)="saveNote()">
+            <div class="note-type-grid">
+              <button type="button" [class.active]="noteForm.status === 'proposed'" (click)="noteForm.status = 'proposed'">Note</button>
+              <button type="button" [class.active]="noteForm.status === 'counter_proposed'" (click)="noteForm.status = 'counter_proposed'">Counter</button>
+              <button type="button" [class.active]="noteForm.status === 'accepted'" (click)="noteForm.status = 'accepted'">Proposal</button>
+            </div>
+            <label class="reference-compact-field">
+              Negotiation Point
+              <input class="form-control" [(ngModel)]="noteForm.negotiationPoint" name="negotiationPoint" placeholder="Pricing, timeline, payment terms">
+            </label>
+            <label>
+              <textarea class="form-control" rows="4" [(ngModel)]="noteForm.note" name="note" placeholder="Add a negotiation note..."></textarea>
+            </label>
+            <label class="reference-compact-field">
+              Customer Response
+              <input class="form-control" [(ngModel)]="noteForm.response" name="response" placeholder="Optional response">
+            </label>
+            <div class="form-actions">
+              <button class="btn btn-danger" type="submit">Save Note</button>
+              <button class="btn btn-outline-secondary" type="button" (click)="toggleSchedulePanel()">
+                <i class="fas fa-calendar-plus"></i>
+                Schedule Discussion
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="note-panel counter-panel" *ngIf="showCounterForm && selectedNote">
+          <h2>Counter Offer</h2>
+          <p>{{ selectedNote.negotiationPoint }}</p>
+          <label>
+            Counter Amount
+            <input class="form-control" type="number" [(ngModel)]="counterForm.amount" placeholder="72000">
+          </label>
+          <label>
+            Counter Terms
+            <textarea class="form-control" rows="4" [(ngModel)]="counterForm.terms" placeholder="Quarterly billing, revised SLA, discount condition, etc."></textarea>
+          </label>
+          <label>
+            Expected Response Date
+            <input class="form-control" type="date" [(ngModel)]="counterForm.responseDate">
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-outline-secondary" type="button" (click)="cancelCounterOffer()">Cancel</button>
+            <button class="btn btn-danger" type="button" (click)="saveCounterOffer()">Save Counter</button>
+          </div>
+        </section>
+
+        <section class="timeline-panel">
+          <div class="section-heading">
+            <div>
+              <h2>Negotiation Timeline</h2>
+            </div>
+            <button class="btn btn-sm btn-danger" type="button" (click)="addNote()">Add Note</button>
+          </div>
+
+          <div class="timeline">
+            <article
+              class="timeline-item clickable"
+              *ngFor="let note of deal.negotiationNotes"
+              [class.active]="selectedNote?.id === note.id"
+              (click)="selectNote(note)"
+              tabindex="0">
+              <span class="timeline-icon" [class]="'status-' + note.status"></span>
+              <div class="timeline-card">
+                <div class="timeline-title">
+                  <div>
+                    <span class="timeline-note-type">{{ getNoteTypeLabel(note.status) }}</span>
+                    <strong>{{ note.proposedBy }}</strong>
+                    <small>Proposed by {{ note.proposedBy }}<ng-container *ngIf="note.respondedBy"> | Responded by {{ note.respondedBy }}</ng-container></small>
+                  </div>
+                  <span class="badge" [class]="'bg-' + getNoteStatusColor(note.status)">{{ getStatusLabel(note.status) | titlecase }}</span>
+                </div>
+                <p>{{ note.note }}</p>
+                <div *ngIf="note.response" class="response-text">{{ note.response }}</div>
+              </div>
+            </article>
+            <div *ngIf="!deal.negotiationNotes?.length" class="empty-state">
+              <i class="fas fa-history"></i>
+              No negotiation notes yet
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="summary-column">
+        <section class="note-panel">
+          <h2>Deal Summary</h2>
+          <div class="summary-list">
+            <div><span>Current Value</span><strong>{{ deal.amount | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+            <div><span>Stage</span><strong>{{ deal.stage }}</strong></div>
+            <div><span>Probability</span><strong>{{ deal.probability }}%</strong></div>
+            <div><span>Close Date</span><strong>{{ closeDateLabel }}</strong></div>
+            <div><span>Quote Total</span><strong>{{ quoteTotal | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+          </div>
+          <button class="btn btn-outline-success w-100 mt-3" type="button" (click)="closeWon()">
+            <i class="fas fa-check"></i>
+            Mark Won
+          </button>
+          <button class="btn btn-outline-danger w-100 mt-2" type="button" (click)="closeLost()">
+            <i class="fas fa-times"></i>
+            Mark Lost
+          </button>
+        </section>
+
+        <section class="action-panel quote-actions-panel">
+          <h2>Quote Actions</h2>
+          <button class="action-button" type="button" (click)="viewProducts()">
+            <i class="fas fa-box"></i>
+            <span>View Products & Quote</span>
+          </button>
+          <button class="action-button" type="button" (click)="viewQuote()">
+            <i class="fas fa-file-circle-plus"></i>
+            <span>Create New Quote</span>
+          </button>
+          <button class="action-button" type="button" (click)="toggleSchedulePanel()">
+            <i class="fas fa-calendar-plus"></i>
+            <span>Schedule Discussion</span>
+          </button>
+          <button class="action-button primary-action" type="button" (click)="sendProposal()">
+            <i class="fas fa-paper-plane"></i>
+            <span>Send Proposal</span>
+          </button>
+        </section>
+
+        <section class="note-panel selected-note-panel" *ngIf="selectedNote">
+          <h2>Selected Terms</h2>
+          <p>{{ selectedNote.negotiationPoint }}</p>
+          <div class="note-action-grid">
+            <button class="btn btn-success" type="button" (click)="updateSelectedNote('accepted')">Accept</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="updateSelectedNote('counter_proposed')">Counter</button>
+            <button class="btn btn-outline-danger" type="button" (click)="updateSelectedNote('rejected')">Reject</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </ng-container>
+</div>

@@ -1,0 +1,72 @@
+<div class="ops-page audit-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Audit logs and monitoring</p>
+      <h1>Audit Logs</h1>
+      <p>Review admin actions, security events, approval decisions, backup restores, and configuration changes from one monitoring view.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-outline-secondary" type="button" (click)="refreshLogs()">Refresh</button>
+      <button class="btn btn-danger" type="button" (click)="runMonitorCheck()">Run Monitor Check</button>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Total events</span><strong>{{ totalEvents }}</strong></div>
+    <div><span>Critical</span><strong>{{ criticalEvents }}</strong></div>
+    <div><span>Security/session</span><strong>{{ securityEvents }}</strong></div>
+    <div><span>Approvals</span><strong>{{ approvalEvents }}</strong></div>
+  </div>
+
+  <section class="panel filters-panel">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input [(ngModel)]="searchTerm" placeholder="Search action, detail, user or module">
+    </div>
+    <select class="form-control" [(ngModel)]="selectedModule">
+      <option value="">All modules</option>
+      <option *ngFor="let module of moduleOptions" [value]="module">{{ module }}</option>
+    </select>
+    <select class="form-control" [(ngModel)]="selectedSeverity">
+      <option value="">All severities</option>
+      <option value="Info">Info</option>
+      <option value="Warning">Warning</option>
+      <option value="Critical">Critical</option>
+    </select>
+    <button class="btn btn-outline-secondary" type="button" (click)="clearFilters()">Clear</button>
+  </section>
+
+  <section class="panel logs-panel">
+    <div class="section-title">
+      <h2>Event Stream</h2>
+      <span>{{ filteredLogs.length }} events shown</span>
+    </div>
+
+    <article class="audit-row header-row">
+      <span>Time</span>
+      <span>Module</span>
+      <span>Action</span>
+      <span>User</span>
+      <span>Severity</span>
+      <span>Details</span>
+      <span></span>
+    </article>
+
+    <article class="audit-row" *ngFor="let log of filteredLogs; trackBy: trackByLog">
+      <span>{{ log.createdAt | date:'MMM d, h:mm a' }}</span>
+      <strong>{{ log.module }}</strong>
+      <span>{{ log.action }}</span>
+      <span>{{ log.user }}</span>
+      <b [ngClass]="getSeverityClass(log.severity)">{{ log.severity }}</b>
+      <span>{{ log.detail }}</span>
+      <button type="button" [disabled]="!log.relatedRoute" (click)="openRelated(log)">
+        Open
+      </button>
+    </article>
+
+    <div class="empty-state" *ngIf="!filteredLogs.length">
+      No audit events match these filters.
+    </div>
+  </section>
+</div>

@@ -1,0 +1,259 @@
+.ops-page {
+  background: #f6f8fb;
+  color: #1f2933;
+  min-height: calc(100vh - 120px);
+  padding: 32px 38px;
+}
+
+.page-header,
+.panel,
+.metric-grid {
+  background: #fff;
+  border: 1px solid #e3e8ef;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(15, 23, 42, .06);
+}
+
+.page-header {
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 18px;
+  padding: 26px 28px;
+}
+
+.eyebrow {
+  color: #c9143f;
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 36px;
+  font-weight: 800;
+}
+
+.page-header p,
+.section-title span,
+.audit-row span {
+  color: #667085;
+}
+
+.header-actions {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.status-pill {
+  background: #eef8f0;
+  border-radius: 999px;
+  color: #237a3b;
+  font-size: 12px;
+  font-weight: 800;
+  height: max-content;
+  padding: 8px 12px;
+}
+
+.metric-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(4, 1fr);
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.metric-grid div {
+  background: #f7f9fc;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.metric-grid span {
+  color: #667085;
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.metric-grid strong {
+  display: block;
+  font-size: 26px;
+  margin-top: 4px;
+}
+
+.filters-panel {
+  align-items: center;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: minmax(280px, 1fr) 220px 180px auto;
+  margin-bottom: 18px;
+  padding: 18px;
+}
+
+.search-box {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  display: flex;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 12px;
+}
+
+.search-box i {
+  color: #98a2b3;
+}
+
+.search-box input {
+  border: 0;
+  color: #1f2933;
+  flex: 1;
+  min-width: 0;
+  outline: 0;
+}
+
+.form-control {
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  min-height: 42px;
+}
+
+.logs-panel {
+  padding: 18px;
+}
+
+.section-title {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.audit-row {
+  align-items: center;
+  border-bottom: 1px solid #edf1f5;
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 150px 130px 180px 140px 90px minmax(260px, 1fr) 72px;
+  min-height: 58px;
+  padding: 10px 0;
+}
+
+.audit-row:last-child {
+  border-bottom: 0;
+}
+
+.header-row {
+  background: #f7f9fc;
+  border: 1px solid #e8edf3;
+  border-radius: 8px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 44px;
+  padding: 0 12px;
+  text-transform: uppercase;
+}
+
+.audit-row strong {
+  color: #101828;
+}
+
+.audit-row b {
+  border-radius: 999px;
+  font-size: 12px;
+  justify-self: start;
+  padding: 5px 9px;
+}
+
+.audit-row b.info {
+  background: #e8f3ff;
+  color: #175cd3;
+}
+
+.audit-row b.warning {
+  background: #fff7e6;
+  color: #b54708;
+}
+
+.audit-row b.critical {
+  background: #ffe8ee;
+  color: #b42318;
+}
+
+.audit-row button {
+  background: #fff;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  color: #344054;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 34px;
+}
+
+.audit-row button:not(:disabled):hover {
+  border-color: #c9143f;
+  color: #c9143f;
+}
+
+.audit-row button:disabled {
+  cursor: not-allowed;
+  opacity: .45;
+}
+
+.empty-state {
+  background: #f7f9fc;
+  border: 1px dashed #d8dee8;
+  border-radius: 8px;
+  color: #667085;
+  font-weight: 700;
+  padding: 22px;
+  text-align: center;
+}
+
+.btn {
+  border-radius: 7px;
+  font-weight: 800;
+  min-height: 40px;
+}
+
+.btn-danger {
+  background: #c9143f;
+  border-color: #c9143f;
+}
+
+@media (max-width: 1200px) {
+  .metric-grid,
+  .filters-panel,
+  .audit-row {
+    grid-template-columns: 1fr;
+  }
+
+  .ops-page {
+    padding: 20px 14px;
+  }
+
+  .page-header,
+  .section-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-row {
+    display: none;
+  }
+}

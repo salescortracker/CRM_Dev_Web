@@ -1,0 +1,61 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Security and compliance</p>
+      <h1>Security Center</h1>
+      <p>Control MFA, password policy, IP restrictions, active sessions, encryption, and audit retention.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="security-layout">
+    <section class="panel">
+      <h2>Access Policy</h2>
+      <label class="toggle-row">
+        <span><strong>Require MFA</strong><small>Enforce multi-factor authentication for tenant users.</small></span>
+        <input type="checkbox" [(ngModel)]="mfaRequired">
+      </label>
+      <label>Password expiry days<input class="form-control" type="number" [(ngModel)]="passwordExpiryDays"></label>
+      <label>Session timeout minutes<input class="form-control" type="number" [(ngModel)]="sessionTimeout"></label>
+      <label>Audit retention days<input class="form-control" type="number" [(ngModel)]="auditRetention"></label>
+      <button class="btn btn-danger w-100" type="button" (click)="savePolicy()">Save Security Policy</button>
+    </section>
+
+    <section class="panel">
+      <h2>IP Restrictions</h2>
+      <div class="ip-form">
+        <input class="form-control" [(ngModel)]="newIp" placeholder="203.0.113.20">
+        <button class="btn btn-outline-secondary" type="button" (click)="addIpRule('Allow')">Allow</button>
+        <button class="btn btn-outline-danger" type="button" (click)="addIpRule('Block')">Block</button>
+      </div>
+      <article class="ip-row" *ngFor="let rule of ipRules">
+        <div><strong>{{ rule.ip }}</strong><span>{{ rule.label }}</span></div>
+        <b [class.block]="rule.action === 'Block'">{{ rule.action }}</b>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Compliance Checks</h2>
+      <article class="check-row" *ngFor="let check of complianceChecks">
+        <strong>{{ check.name }}</strong>
+        <span>{{ check.detail }}</span>
+        <b>{{ check.status }}</b>
+      </article>
+    </section>
+  </div>
+
+  <section class="panel sessions-panel">
+    <h2>Active Sessions</h2>
+    <article class="session-row" *ngFor="let session of sessions" [class.untrusted]="!session.trusted">
+      <div>
+        <strong>{{ session.user }}</strong>
+        <span>{{ session.role }} | {{ session.device }} | {{ session.location }}</span>
+        <small>{{ session.ip }} | Last active {{ session.lastActive }}</small>
+      </div>
+      <div class="row-actions">
+        <button type="button" (click)="trustSession(session)" *ngIf="!session.trusted">Trust</button>
+        <button type="button" (click)="forceLogout(session)">Force Logout</button>
+      </div>
+    </article>
+  </section>
+</div>

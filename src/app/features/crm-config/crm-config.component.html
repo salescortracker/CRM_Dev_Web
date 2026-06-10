@@ -1,0 +1,48 @@
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">CRM configuration</p>
+      <h1>CRM Config</h1>
+      <p>Configure currency, timezone, fiscal year, branding, and business validation rules.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+
+  <div class="config-layout">
+    <section class="config-panel">
+      <h2>Company Settings</h2>
+      <div class="form-grid">
+        <label>Currency<select class="form-control" [(ngModel)]="settings.currency"><option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option></select></label>
+        <label>Time zone<select class="form-control" [(ngModel)]="settings.timeZone"><option *ngFor="let zone of timeZones" [value]="zone">{{ zone }}</option></select></label>
+        <label>Fiscal year start<select class="form-control" [(ngModel)]="settings.fiscalYearStart"><option *ngFor="let month of fiscalMonths" [value]="month">{{ month }}</option></select></label>
+        <label>Date format<input class="form-control" [(ngModel)]="settings.dateFormat"></label>
+      </div>
+    </section>
+
+    <section class="config-panel">
+      <h2>Branding</h2>
+      <div class="brand-grid">
+        <label>Brand name<input class="form-control" [(ngModel)]="settings.brandName"></label>
+        <label>Primary color<input class="form-control" type="color" [(ngModel)]="settings.primaryColor"></label>
+      </div>
+      <div class="brand-preview" [style.border-color]="settings.primaryColor">
+        <span [style.background]="settings.primaryColor"></span>
+        <strong>{{ settings.brandName }}</strong>
+      </div>
+    </section>
+
+    <section class="config-panel rules-panel">
+      <div class="section-title">
+        <h2>Business Rules</h2>
+        <p>Toggle validations that control lead, contact, and deal behavior.</p>
+      </div>
+      <button class="rule-row" type="button" *ngFor="let rule of rules" [class.enabled]="rule.enabled" (click)="toggleRule(rule)">
+        <i class="fas" [ngClass]="rule.enabled ? 'fa-toggle-on' : 'fa-toggle-off'"></i>
+        <span><strong>{{ rule.name }}</strong><small>{{ rule.description }}</small></span>
+      </button>
+    </section>
+  </div>
+</div>

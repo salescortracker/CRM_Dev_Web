@@ -1,0 +1,137 @@
+<div class="engagement-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Customer touchpoints</p>
+      <h1>Engagement</h1>
+      <p>Track emails, calls, meetings, SMS, and WhatsApp replies with simple next steps.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Emails sent</span><strong>{{ emailsSent }}</strong></div>
+    <div><span>Calls logged</span><strong>{{ callsLogged }}</strong></div>
+    <div><span>Meetings</span><strong>{{ meetings }}</strong></div>
+    <div><span>Responses</span><strong>{{ responses }}</strong></div>
+  </div>
+
+  <div class="engagement-layout">
+    <section class="timeline-panel">
+      <article
+        class="touchpoint"
+        *ngFor="let item of engagements"
+        [class.active]="selectedEngagement?.id === item.id"
+        (click)="selectEngagement(item)">
+        <span class="touch-icon"><i class="fas" [ngClass]="getChannelIcon(item.channel)"></i></span>
+        <div>
+          <div class="touch-heading">
+            <strong>{{ item.title }}</strong>
+            <span>{{ item.outcome }}</span>
+          </div>
+          <p>{{ item.person }} • {{ item.company }}</p>
+          <small>{{ item.channel }} • {{ item.time }}</small>
+        </div>
+      </article>
+    </section>
+
+    <aside class="detail-panel" *ngIf="selectedEngagement">
+      <p class="eyebrow">{{ selectedEngagement.channel }}</p>
+      <h2>{{ selectedEngagement.title }}</h2>
+      <p>{{ selectedEngagement.notes }}</p>
+      <div class="detail-grid">
+        <div><span>Person</span><strong>{{ selectedEngagement.person }}</strong></div>
+        <div><span>Company</span><strong>{{ selectedEngagement.company }}</strong></div>
+        <div><span>Related</span><strong>{{ selectedEngagement.relatedName }}</strong></div>
+        <div><span>Outcome</span><strong>{{ selectedEngagement.outcome }}</strong></div>
+      </div>
+      <div class="next-step">
+        <i class="fas fa-bolt"></i>
+        {{ selectedEngagement.nextAction }}
+      </div>
+
+      <div class="action-row">
+        <button class="btn btn-outline-secondary" type="button" (click)="startComposer('Email')">Send Email</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="startComposer('Call')">Log Call</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="startComposer('Meeting')">Schedule Meeting</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="createTask()">Create Task</button>
+        <button class="btn btn-danger" type="button" (click)="openNextStep()">Open Next Step</button>
+      </div>
+
+      <div class="ops-shortcuts">
+        <button type="button" (click)="openEmailManagement()">
+          <i class="fas fa-envelope-open-text"></i>
+          Email Templates
+        </button>
+        <button type="button" (click)="openTelephony()">
+          <i class="fas fa-phone-volume"></i>
+          Call Center
+        </button>
+        <button type="button" (click)="openMessaging()">
+          <i class="fas fa-message"></i>
+          WhatsApp/SMS
+        </button>
+      </div>
+
+      <div class="composer" *ngIf="activeComposer">
+        <div class="composer-header">
+          <h3>{{ activeComposer }}</h3>
+          <button class="btn btn-sm btn-outline-secondary" type="button" (click)="activeComposer = null">Close</button>
+        </div>
+        <ng-container *ngIf="activeComposer === 'Email'">
+          <input class="form-control" [(ngModel)]="composeSubject" placeholder="Subject">
+          <textarea class="form-control" rows="4" [(ngModel)]="composeMessage" placeholder="Message"></textarea>
+        </ng-container>
+        <ng-container *ngIf="activeComposer === 'Call'">
+          <select class="form-control" [(ngModel)]="callOutcome">
+            <option>Connected</option>
+            <option>Needs Follow-up</option>
+            <option>Replied</option>
+          </select>
+          <textarea class="form-control" rows="4" [(ngModel)]="composeMessage" placeholder="Call notes"></textarea>
+        </ng-container>
+        <ng-container *ngIf="activeComposer === 'Meeting'">
+          <div class="inline-meeting-warning" *ngIf="getSelectedMeetings().length">
+            <div class="warning-head">
+              <i class="fas fa-triangle-exclamation"></i>
+              <span>{{ getSelectedMeetings().length }} upcoming meeting already exists for this record.</span>
+              <button type="button" (click)="showUpcomingMeetings = !showUpcomingMeetings">{{ showUpcomingMeetings ? 'Hide' : 'View' }}</button>
+            </div>
+            <div class="warning-meeting-row" *ngFor="let meeting of getSelectedMeetings()" [hidden]="!showUpcomingMeetings">
+              <strong>{{ meeting.title }}</strong>
+              <span>{{ meeting.date }} at {{ meeting.time }} | {{ meeting.provider }}</span>
+            </div>
+          </div>
+          <div class="meeting-provider-grid">
+            <button
+              type="button"
+              *ngFor="let provider of meetingProviders"
+              class="meeting-provider"
+              [class.active]="meetingProvider === provider.name"
+              [class.disabled]="!provider.connected"
+              [disabled]="!provider.connected"
+              (click)="selectMeetingProvider(provider.name)">
+              <i class="fas" [ngClass]="provider.icon"></i>
+              <span>{{ provider.name }}</span>
+              <small>{{ provider.connected ? 'Connected' : 'Not connected' }}</small>
+            </button>
+          </div>
+          <select class="form-control" [(ngModel)]="meetingPurpose">
+            <option *ngFor="let purpose of meetingPurposes" [value]="purpose">{{ purpose }}</option>
+          </select>
+          <div class="meeting-time-grid">
+            <input class="form-control" type="date" [(ngModel)]="meetingDate">
+            <input class="form-control" type="time" [(ngModel)]="meetingTime">
+          </div>
+          <select class="form-control" [(ngModel)]="meetingReminder">
+            <option>15 minutes before</option>
+            <option>30 minutes before</option>
+            <option>1 hour before</option>
+            <option>1 day before</option>
+          </select>
+          <textarea class="form-control" rows="3" [(ngModel)]="composeMessage" placeholder="Meeting agenda"></textarea>
+        </ng-container>
+        <button class="btn btn-danger" type="button" (click)="saveComposer()">Save</button>
+      </div>
+    </aside>
+  </div>
+</div>

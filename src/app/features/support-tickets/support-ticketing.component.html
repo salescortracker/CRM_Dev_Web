@@ -1,0 +1,57 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Customer support</p>
+      <h1>Support Tickets</h1>
+      <p>Track support issues against customers, deals, invoices, SLAs, and follow-up tasks.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Open tickets</span><strong>{{ tickets.length }}</strong></div>
+    <div><span>Critical</span><strong>{{ criticalCount }}</strong></div>
+    <div><span>SLA risk</span><strong>{{ breachedCount }}</strong></div>
+  </div>
+
+  <div class="ticket-layout">
+    <section class="panel">
+      <article class="ticket-row" *ngFor="let ticket of tickets" [class.active]="selectedTicketId === ticket.id" (click)="selectedTicketId = ticket.id">
+        <div>
+          <strong>{{ ticket.title }}</strong>
+          <span>{{ ticket.company }} | {{ ticket.relatedName }}</span>
+        </div>
+        <b [class.risk]="ticket.sla !== 'On Track'">{{ ticket.sla }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedTicket.relatedType | titlecase }}</p>
+      <h2>{{ selectedTicket.title }}</h2>
+      <p>{{ selectedTicket.summary }}</p>
+      <div class="detail-grid">
+        <div><span>Status</span><strong>{{ selectedTicket.status }}</strong></div>
+        <div><span>Priority</span><strong>{{ selectedTicket.priority }}</strong></div>
+        <div><span>SLA</span><strong>{{ selectedTicket.sla }}</strong></div>
+        <div><span>Owner</span><strong>{{ selectedTicket.owner }}</strong></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="escalate(selectedTicket)">Escalate</button>
+        <button class="btn btn-success" type="button" (click)="resolve(selectedTicket)">Resolve</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="createTask(selectedTicket)">Create Task</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openRelated(selectedTicket)">Open Related</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Ticket Timeline</h2>
+      <textarea class="form-control" rows="3" [(ngModel)]="newComment" placeholder="Add internal note or customer update"></textarea>
+      <button class="btn btn-danger w-100" type="button" (click)="addComment()">Add Comment</button>
+      <article class="comment-row" *ngFor="let comment of selectedTicket.comments">
+        <strong>{{ comment.author }}</strong>
+        <p>{{ comment.note }}</p>
+        <small>{{ comment.time }}</small>
+      </article>
+    </section>
+  </div>
+</div>

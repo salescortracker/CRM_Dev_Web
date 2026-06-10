@@ -1,0 +1,567 @@
+<div class="deals-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Revenue flow</p>
+      <h1>Deals</h1>
+      <p class="page-subtitle">Track opportunities from prospecting to close.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <div class="view-toggle" aria-label="Deal view mode">
+        <button type="button" [class.active]="viewMode === 'table'" (click)="switchViewMode('table')" title="Table view">
+          <i class="fas fa-list"></i>
+          <span>Table</span>
+        </button>
+        <button type="button" [class.active]="viewMode === 'kanban'" (click)="switchViewMode('kanban')" title="Kanban view">
+          <i class="fas fa-grip"></i>
+          <span>Kanban</span>
+        </button>
+      </div>
+      <button class="btn btn-outline-secondary" type="button" (click)="exportDeals()">
+        <i class="fas fa-download"></i>
+        Export
+      </button>
+      <button class="btn btn-danger" type="button" (click)="openNewDealModal()">
+        <i class="fas fa-plus"></i>
+        New Deal
+      </button>
+    </div>
+  </div>
+
+  <div class="deal-kpi-grid">
+    <article class="deal-kpi-card kpi-brand">
+      <div>
+        <span>Total Pipeline</span>
+        <strong>{{ getShortCurrency(totalPipelineValue) }}</strong>
+        <small>{{ openDealsCount }} open deals</small>
+      </div>
+      <i class="fas fa-arrow-trend-up"></i>
+      <b>+12%</b>
+    </article>
+    <article class="deal-kpi-card kpi-blue">
+      <div>
+        <span>Weighted Forecast</span>
+        <strong>{{ getShortCurrency(weightedPipelineValue) }}</strong>
+        <small>Probability-adjusted</small>
+      </div>
+      <i class="fas fa-chart-column"></i>
+      <b>+8%</b>
+    </article>
+    <article class="deal-kpi-card kpi-amber">
+      <div>
+        <span>Open Deals</span>
+        <strong>{{ openDealsCount }}</strong>
+        <small>Active in pipeline</small>
+      </div>
+      <i class="fas fa-briefcase"></i>
+    </article>
+    <article class="deal-kpi-card kpi-green">
+      <div>
+        <span>Closed Won</span>
+        <strong>{{ getShortCurrency(closedWonValue) }}</strong>
+        <small>{{ closedWonDeals.length }} deals closed</small>
+      </div>
+      <i class="fas fa-circle-check"></i>
+    </article>
+    <article class="deal-kpi-card kpi-violet">
+      <div>
+        <span>Avg Deal Size</span>
+        <strong>{{ getShortCurrency(avgDealSize) }}</strong>
+        <small>Across active deals</small>
+      </div>
+      <i class="fas fa-bullseye"></i>
+    </article>
+  </div>
+
+  <section class="pipeline-funnel-card" *ngIf="!selectedDeal">
+    <div class="funnel-header">
+      <div>
+        <h3>Pipeline Funnel</h3>
+        <p>Deal value by stage - click to filter</p>
+      </div>
+      <span>{{ activePipelineDeals.length }} active</span>
+    </div>
+
+    <button
+      type="button"
+      class="funnel-row"
+      *ngFor="let stage of funnelStages; let index = index"
+      [class.active]="filters.stage === stage"
+      [ngClass]="filters.stage === stage ? getStageToneClass(stage) : ''"
+      (click)="setStageFilter(stage)">
+      <span class="funnel-step" [ngClass]="getStageClass(stage)">{{ index + 1 }}</span>
+      <strong class="funnel-stage-name">{{ stage }}</strong>
+      <span class="funnel-track">
+        <span class="funnel-fill" [ngClass]="getStageClass(stage)" [style.width.%]="getStageFunnelPercent(stage)">
+          {{ getShortCurrency(getStageValue(stage)) }}
+        </span>
+      </span>
+      <span class="funnel-stat">
+        <strong>{{ getShortCurrency(getStageValue(stage)) }}</strong>
+        <small>total</small>
+      </span>
+      <span class="funnel-stat">
+        <strong>{{ getFunnelStageCount(stage) }}</strong>
+        <small>deals</small>
+      </span>
+      <span class="funnel-stat">
+        <strong [ngClass]="getStageConversionClass(stage)">{{ getStageConversion(stage) }}</strong>
+        <small>conv.</small>
+      </span>
+    </button>
+  </section>
+
+  <section class="deals-filter-card" *ngIf="!selectedDeal">
+    <div class="filter-top-row">
+      <div class="search-field">
+        <i class="fas fa-search"></i>
+        <input
+          type="search"
+          class="form-control"
+          placeholder="Search deals or companies..."
+          [(ngModel)]="dealSearch">
+      </div>
+      <select class="form-select owner-select" [(ngModel)]="filters.owner" (change)="onFilterChange()">
+        <option value="">All Reps</option>
+        <option *ngFor="let owner of ownerOptions" [value]="owner">{{ owner }}</option>
+      </select>
+      <input type="number" class="form-control amount-input" placeholder="Min $" [(ngModel)]="filters.minAmount" (change)="onFilterChange()">
+      <input type="number" class="form-control amount-input" placeholder="Max $" [(ngModel)]="filters.maxAmount" (change)="onFilterChange()">
+      <button class="reset-button" type="button" (click)="clearFilters()">Reset</button>
+      <span class="filter-count">{{ filteredDeals.length }} deals</span>
+    </div>
+    <div class="stage-filter-row">
+      <button type="button" class="stage-filter-pill" [class.active]="!filters.stage" (click)="setStageFilter('All')">All</button>
+      <button
+        type="button"
+        class="stage-filter-pill"
+        *ngFor="let stage of pipelineStages"
+        [class.active]="filters.stage === stage"
+        [ngClass]="filters.stage === stage ? getStageToneClass(stage) : ''"
+        (click)="setStageFilter(stage)">
+        {{ stage }}
+      </button>
+    </div>
+  </section>
+
+  <div *ngIf="loading" class="loading-state">
+    <span class="spinner-border"></span>
+    Loading deals
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="!selectedDeal && viewMode === 'table'" class="table-panel reference-deals-table">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th>Deal</th>
+            <th>Company</th>
+            <th>Value</th>
+            <th>Stage</th>
+            <th>Probability</th>
+            <th>Rep</th>
+            <th>Close Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let deal of filteredDeals" (click)="selectDeal(deal)" class="deal-row">
+            <td>
+              <div class="deal-name-cell">
+                <span>
+                  <strong>{{ deal.name }}</strong>
+                  <small>{{ getDealDescription(deal) }}</small>
+                </span>
+              </div>
+            </td>
+            <td>
+              <div class="company-cell">
+                <span class="deal-avatar" [ngClass]="getStageClass(deal.stage)">{{ getCompanyInitials(deal) }}</span>
+                <span>{{ getCompanyName(deal) }}</span>
+              </div>
+            </td>
+            <td>
+              <strong class="deal-value">{{ deal.amount | currency:'USD':'symbol':'1.0-0' }}</strong>
+            </td>
+            <td><span class="stage-pill" [ngClass]="getStageClass(deal.stage)">{{ deal.stage }}</span></td>
+            <td>
+              <div class="probability-cell">
+                <div class="progress">
+                  <div class="progress-bar" [ngClass]="getStageClass(deal.stage)" [style.width.%]="deal.probability"></div>
+                </div>
+                <span>{{ deal.probability }}%</span>
+              </div>
+            </td>
+            <td>
+              <div class="rep-cell">
+                <span class="rep-avatar">{{ getOwnerInitials(deal) }}</span>
+                <span>{{ getOwnerName(deal) }}</span>
+              </div>
+            </td>
+            <td>
+              <div class="close-date-cell">
+                <span>{{ getCloseDateLabel(deal) }}</span>
+                <small [ngClass]="getCloseDateStatusClass(deal)">{{ getCloseDateStatus(deal) }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="row-actions">
+                <button class="icon-button" type="button" title="Products" (click)="viewProducts(deal.id, $event)">
+                  <i class="fas fa-box"></i>
+                </button>
+                <button class="icon-button" type="button" title="Negotiate" (click)="negotiateDeal(deal.id, $event)">
+                  <i class="fas fa-handshake"></i>
+                </button>
+                <button class="icon-button" type="button" title="Edit" (click)="editDeal(deal.id, $event)">
+                  <i class="fas fa-pen"></i>
+                </button>
+                <button class="icon-button danger" type="button" title="Delete" (click)="deleteDeal(deal.id, $event)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="empty-state" *ngIf="!filteredDeals.length">
+        <i class="fas fa-briefcase"></i>
+        <h3>No deals match the current filters</h3>
+        <p>Clear filters or create a new deal to continue the revenue flow.</p>
+      </div>
+    </div>
+
+    <div *ngIf="!selectedDeal && viewMode === 'kanban'" class="kanban-board reference-kanban">
+      <section class="kanban-column" *ngFor="let stage of kanbanStages" [ngClass]="getStageToneClass(stage)">
+        <div class="kanban-header">
+          <div>
+            <h3>{{ stage }}</h3>
+            <span>{{ getShortCurrency(getStageValue(stage)) }} total</span>
+          </div>
+          <b>{{ getStageCount(stage) }}</b>
+        </div>
+        <article class="kanban-card" *ngFor="let deal of getDealsByStage(stage)" [ngClass]="getStageToneClass(stage)" (click)="selectDeal(deal)">
+          <div class="kanban-card-top">
+            <span class="deal-avatar">{{ getCompanyInitials(deal) }}</span>
+            <strong>{{ getCompanyName(deal) }}</strong>
+          </div>
+          <div class="kanban-card-body">
+            <h4>{{ deal.name }}</h4>
+            <p>{{ getDealDescription(deal) }}</p>
+            <div class="kanban-card-value">{{ deal.amount | currency:'USD':'symbol':'1.0-0' }}</div>
+            <div class="kanban-probability">
+              <div class="progress">
+                <div class="progress-bar" [ngClass]="getStageProbabilityColor(deal)" [style.width.%]="deal.probability"></div>
+              </div>
+              <span>{{ deal.probability }}%</span>
+            </div>
+          </div>
+          <div class="kanban-card-footer">
+            <div>
+              <span class="rep-avatar">{{ getOwnerInitials(deal) }}</span>
+              <span>{{ getOwnerName(deal) }}</span>
+            </div>
+            <div class="kanban-date">
+              <span>{{ getCloseDateShortLabel(deal) }}</span>
+              <strong [ngClass]="getCloseDateStatusClass(deal)">{{ getCloseDateStatus(deal) }}</strong>
+            </div>
+          </div>
+          <span class="risk-pill" [ngClass]="getRiskClass(deal)">{{ getRiskBadgeText(deal) }}</span>
+          <div class="kanban-actions" (click)="$event.stopPropagation()">
+            <button type="button" title="Products" (click)="viewProducts(deal.id, $event)"><i class="fas fa-box"></i></button>
+            <button type="button" title="Negotiate" (click)="negotiateDeal(deal.id, $event)"><i class="fas fa-handshake"></i></button>
+            <button type="button" title="Advance" (click)="advanceDealStage(deal, $event)"><i class="fas fa-chevron-right"></i></button>
+            <button type="button" title="Edit" (click)="editDeal(deal.id, $event)"><i class="fas fa-pen"></i></button>
+            <button type="button" title="Delete" (click)="deleteDeal(deal.id, $event)"><i class="fas fa-trash"></i></button>
+          </div>
+        </article>
+      </section>
+    </div>
+
+    <ng-container *ngIf="selectedDeal">
+      <section class="deal-breadcrumb-bar">
+        <span class="active"><i class="fas fa-briefcase"></i> Deal Profile</span>
+        <i class="fas fa-chevron-right"></i>
+        <button type="button" (click)="viewProducts(selectedDeal.id)"><i class="fas fa-box"></i> Products & Quote</button>
+        <i class="fas fa-chevron-right"></i>
+        <button type="button" (click)="negotiateDeal(selectedDeal.id)"><i class="fas fa-handshake"></i> Negotiation</button>
+      </section>
+
+      <div class="deal-detail-layout reference-profile-layout">
+        <aside class="deal-sidebar reference-deal-sidebar">
+          <div class="sidebar-title">
+            <span>Deals</span>
+            <button class="icon-button" type="button" title="Close profile" (click)="closeDealProfile()">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          <button
+            type="button"
+            class="deal-side-row"
+            *ngFor="let deal of filteredDeals"
+            [class.active]="selectedDeal.id === deal.id"
+            [ngClass]="selectedDeal.id === deal.id ? getStageToneClass(deal.stage) : ''"
+            (click)="selectDeal(deal)">
+            <span>
+              <strong>{{ deal.name }}</strong>
+              <small>{{ getCompanyName(deal) }}</small>
+              <em><i [ngClass]="getStageClass(deal.stage)"></i><span>{{ deal.stage }}</span><b>{{ getShortCurrency(deal.amount) }}</b></em>
+            </span>
+          </button>
+        </aside>
+
+        <section class="deal-profile reference-deal-profile">
+          <div class="profile-hero reference-profile-hero" [ngClass]="getStageProfileClass(selectedDeal.stage)">
+            <div class="profile-hero-main">
+              <div class="profile-title-block">
+                <span class="deal-avatar large-avatar">{{ getCompanyInitials(selectedDeal) }}</span>
+                <div>
+                  <h2>{{ selectedDeal.name }}</h2>
+                  <p>{{ getCompanyName(selectedDeal) }} | {{ getContactName(selectedDeal) }} | {{ getContactRole(selectedDeal) }}</p>
+                  <div class="profile-badges">
+                    <span class="stage-pill" [ngClass]="getStageClass(selectedDeal.stage)">{{ selectedDeal.stage }}</span>
+                    <span class="risk-pill" [ngClass]="getRiskClass(selectedDeal)">{{ getRiskBadgeText(selectedDeal) }}</span>
+                  </div>
+                </div>
+              </div>
+              <aside class="deal-value-card">
+                <span>Deal Value</span>
+                <strong>{{ selectedDeal.amount | currency:'USD':'symbol':'1.0-0' }}</strong>
+                <small><i></i>{{ getRiskLevel(selectedDeal) === 'None' ? 'Healthy' : 'At Risk' }} ({{ selectedDeal.probability }}%)</small>
+              </aside>
+            </div>
+
+            <div class="profile-stage-track">
+              <span
+                *ngFor="let stage of profilePipelineStages"
+                [class]="getProfileStageState(selectedDeal, stage)"
+                [ngClass]="getStageClass(stage)">
+                <i class="fas" [ngClass]="getProfileStageIcon(selectedDeal, stage)"></i>
+                {{ stage }}
+              </span>
+            </div>
+
+            <div class="profile-alert">
+              <i class="fas fa-bullseye"></i>
+              <strong>{{ getRiskAlertLabel(selectedDeal) }}</strong>
+              <span>|</span>
+              <b>{{ getCloseDateShortLabel(selectedDeal) }}</b>
+            </div>
+          </div>
+
+          <div class="profile-toolbar">
+            <button class="btn btn-outline-secondary" type="button" title="Edit Deal" (click)="editDeal(selectedDeal.id)"><i class="fas fa-pen"></i> Edit Deal</button>
+            <button class="btn btn-outline-primary" type="button" title="View Products" (click)="viewProducts(selectedDeal.id)"><i class="fas fa-box"></i> Products</button>
+            <button class="btn btn-outline-purple" type="button" title="Negotiate Deal" (click)="negotiateDeal(selectedDeal.id)"><i class="fas fa-handshake"></i> Negotiate</button>
+            <button class="btn btn-outline-secondary" type="button" title="Open Company" (click)="openCompany(selectedDeal)"><i class="fas fa-building"></i> Company</button>
+            <button class="btn btn-outline-secondary" type="button" title="Schedule Meeting" (click)="toggleSchedulePanel()"><i class="fas fa-calendar-plus"></i> Schedule</button>
+            <span class="toolbar-spacer"></span>
+            <button class="btn btn-outline-success" type="button" title="Mark Won" (click)="markWon(selectedDeal)"><i class="fas fa-check"></i> Mark Won</button>
+            <button class="btn btn-outline-danger" type="button" title="Mark Lost" (click)="markLost(selectedDeal)"><i class="fas fa-times"></i> Mark Lost</button>
+            <button class="btn btn-outline-danger" type="button" title="Delete Deal" (click)="deleteDeal(selectedDeal.id)"><i class="fas fa-trash"></i> Delete</button>
+          </div>
+
+          <div class="inline-schedule-panel" *ngIf="showSchedulePanel">
+            <div class="schedule-panel-header">
+              <div>
+                <strong>Schedule deal meeting</strong>
+                <span>{{ selectedDeal.name }} | {{ getCompanyName(selectedDeal) }}</span>
+              </div>
+              <button class="icon-button" type="button" title="Close scheduler" (click)="showSchedulePanel = false">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+
+            <div class="inline-meeting-warning" *ngIf="getSelectedDealMeetings().length">
+              <div class="warning-head">
+                <i class="fas fa-triangle-exclamation"></i>
+                <span>{{ getSelectedDealMeetings().length }} upcoming meeting already scheduled for this deal.</span>
+                <button type="button" (click)="showUpcomingMeetings = !showUpcomingMeetings">{{ showUpcomingMeetings ? 'Hide' : 'View' }}</button>
+              </div>
+              <div class="warning-meeting-row" *ngFor="let meeting of getSelectedDealMeetings()" [hidden]="!showUpcomingMeetings">
+                <strong>{{ meeting.title }}</strong>
+                <span>{{ meeting.date }} at {{ meeting.time }} | {{ meeting.provider }} | Owner: {{ meeting.owner }}</span>
+              </div>
+            </div>
+
+            <div class="meeting-provider-grid">
+              <button
+                type="button"
+                *ngFor="let provider of meetingProviders"
+                class="meeting-provider"
+                [class.active]="meetingProvider === provider.name"
+                [class.disabled]="!provider.connected"
+                [disabled]="!provider.connected"
+                (click)="selectMeetingProvider(provider.name)">
+                <i class="fas" [ngClass]="provider.icon"></i>
+                <span>{{ provider.name }}</span>
+                <small>{{ provider.connected ? 'Connected' : 'Not connected' }}</small>
+              </button>
+            </div>
+
+            <div class="schedule-form-grid">
+              <select class="form-control" [(ngModel)]="meetingPurpose">
+                <option *ngFor="let purpose of meetingPurposes" [value]="purpose">{{ purpose }}</option>
+              </select>
+              <select class="form-control" [(ngModel)]="meetingReminder">
+                <option>15 minutes before</option>
+                <option>30 minutes before</option>
+                <option>1 hour before</option>
+                <option>1 day before</option>
+              </select>
+              <input class="form-control" type="date" [(ngModel)]="meetingDate">
+              <input class="form-control" type="time" [(ngModel)]="meetingTime">
+            </div>
+            <textarea class="form-control" rows="2" [(ngModel)]="meetingNotes" placeholder="Agenda or internal note"></textarea>
+            <div class="schedule-actions">
+              <button class="btn btn-outline-secondary" type="button" (click)="showSchedulePanel = false">Cancel</button>
+              <button class="btn btn-danger" type="button" (click)="saveMeeting()">Schedule Meeting</button>
+            </div>
+          </div>
+
+          <div class="profile-tabs">
+            <button type="button" [class.active]="profileTab === 'overview'" (click)="setProfileTab('overview')">Overview</button>
+            <button type="button" [class.active]="profileTab === 'timeline'" (click)="setProfileTab('timeline')">Timeline</button>
+            <button type="button" [class.active]="profileTab === 'health'" (click)="setProfileTab('health')">Health</button>
+            <button type="button" [class.active]="profileTab === 'notes'" (click)="setProfileTab('notes')">Notes</button>
+          </div>
+
+          <div *ngIf="profileTab === 'overview'" class="reference-overview-grid">
+            <div class="profile-info-card">
+              <span><i class="fas fa-arrow-trend-up"></i> Stage</span>
+              <strong><span class="stage-pill" [ngClass]="getStageClass(selectedDeal.stage)">{{ selectedDeal.stage }}</span></strong>
+            </div>
+            <div class="profile-info-card">
+              <span><i class="fas fa-user"></i> Sales Rep</span>
+              <strong>{{ getOwnerName(selectedDeal) }}</strong>
+            </div>
+            <div class="profile-info-card">
+              <span><i class="fas fa-chart-simple"></i> Probability</span>
+              <strong>{{ selectedDeal.probability }}%</strong>
+              <div class="progress"><div class="progress-bar" [ngClass]="getStageProbabilityColor(selectedDeal)" [style.width.%]="selectedDeal.probability"></div></div>
+            </div>
+            <div class="profile-info-card">
+              <span><i class="fas fa-calendar"></i> Close Date</span>
+              <strong>{{ getCloseDateShortLabel(selectedDeal) }}</strong>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-dollar-sign"></i></span>
+              <div>
+                <span>Deal Value</span>
+                <strong>{{ selectedDeal.amount | currency:'USD':'symbol':'1.0-0' }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-building"></i></span>
+              <div>
+                <span>Company</span>
+                <strong>{{ getCompanyName(selectedDeal) }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-user"></i></span>
+              <div>
+                <span>Contact</span>
+                <strong>{{ getContactName(selectedDeal) }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-tag"></i></span>
+              <div>
+                <span>Contact Role</span>
+                <strong>{{ getContactRole(selectedDeal) }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-chevron-right"></i></span>
+              <div>
+                <span>Next Action</span>
+                <strong>{{ getRiskAlertLabel(selectedDeal) }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card wide-card">
+              <span class="detail-icon"><i class="fas fa-calendar"></i></span>
+              <div>
+                <span>Action Date</span>
+                <strong>{{ getCloseDateShortLabel(selectedDeal) }}</strong>
+              </div>
+            </div>
+            <div class="profile-info-card full-card">
+              <span>Deal Intel</span>
+              <p>{{ getDealIntel(selectedDeal) }}</p>
+            </div>
+          </div>
+
+          <div *ngIf="profileTab === 'timeline'" class="profile-grid lower-grid">
+            <div class="info-panel wide-panel">
+              <h3>Deal Timeline</h3>
+              <div class="timeline">
+                <div class="timeline-item" *ngFor="let item of getDealTimeline(selectedDeal)">
+                  <span><i class="fas" [ngClass]="item.icon"></i></span>
+                  <div>
+                    <strong>{{ item.title }}</strong>
+                    <p>{{ item.detail }}</p>
+                    <small>{{ item.time }}</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="profileTab === 'health'" class="profile-grid">
+            <div class="info-panel">
+              <h3>Health Score</h3>
+              <div class="health-score-ring" [ngClass]="getRiskClass(selectedDeal)">
+                <strong>{{ getDealHealthScore(selectedDeal) }}%</strong>
+                <span>{{ getRiskLevel(selectedDeal) }} risk</span>
+              </div>
+            </div>
+            <div class="info-panel">
+              <h3>Health Drivers</h3>
+              <div class="driver-list">
+                <div><span>Products</span><strong>{{ selectedDeal.lineItems?.length ? 'Ready' : 'Missing' }}</strong></div>
+                <div><span>Quote</span><strong>{{ selectedDeal.quoteId ? 'Created' : 'Pending' }}</strong></div>
+                <div><span>Negotiation</span><strong>{{ selectedDeal.negotiationNotes?.length || 0 }} updates</strong></div>
+                <div><span>Owner</span><strong>{{ getOwnerName(selectedDeal) }}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="profileTab === 'notes'" class="deal-notes-panel">
+            <section class="profile-info-card full-card deal-note-compose">
+              <span><i class="fas fa-clipboard"></i> Deal Note</span>
+              <textarea
+                class="form-control deal-note-input"
+                rows="4"
+                placeholder="Add an internal note for this deal..."
+                [(ngModel)]="newDealNote"></textarea>
+              <button class="btn btn-danger note-save-action" type="button" (click)="saveDealProfileNote()">
+                <i class="fas fa-clipboard-check"></i>
+                Save Note
+              </button>
+            </section>
+
+            <section class="deal-note-list">
+              <article class="deal-note-card" *ngFor="let note of getDealProfileNotes(selectedDeal)">
+                <div class="deal-note-header">
+                  <div class="deal-note-author">
+                    <span class="deal-note-avatar">{{ getNoteInitials(note.author) }}</span>
+                    <div>
+                      <strong>{{ note.author }}</strong>
+                      <small>{{ note.createdAt | date:'medium' }}</small>
+                    </div>
+                  </div>
+                  <div class="deal-note-tags">
+                    <span class="deal-note-stage" [ngClass]="getStageClass(note.stage)">{{ note.stage }}</span>
+                    <span class="deal-note-badge">{{ note.badge }}</span>
+                  </div>
+                </div>
+                <p>{{ note.body }}</p>
+              </article>
+            </section>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+  </ng-container>
+</div>

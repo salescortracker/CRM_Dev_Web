@@ -1,0 +1,74 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Email operations</p>
+      <h1>Email Management</h1>
+      <p>Manage CRM email sending, templates, bulk follow-ups, and open/click tracking.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="status-grid">
+    <section *ngFor="let connection of smtpConnections" class="status-card" [class.warning]="connection.status.includes('Needs')">
+      <i class="fas" [ngClass]="connection.icon"></i>
+      <div>
+        <span>{{ connection.name }}</span>
+        <strong>{{ connection.status }}</strong>
+        <small>{{ connection.sender }} | {{ connection.health }}</small>
+      </div>
+    </section>
+  </div>
+
+  <div class="workspace-grid">
+    <section class="panel">
+      <div class="section-heading">
+        <h2>CRM Templates</h2>
+        <button class="btn btn-outline-secondary" type="button" (click)="sendTest()">Send Test</button>
+      </div>
+      <article
+        class="template-row"
+        *ngFor="let template of templates"
+        [class.active]="selectedTemplateId === template.id"
+        (click)="useTemplate(template)">
+        <div>
+          <strong>{{ template.name }}</strong>
+          <span>{{ template.recordName }}</span>
+        </div>
+        <b>{{ template.type }}</b>
+      </article>
+    </section>
+
+    <section class="panel preview-panel">
+      <p class="eyebrow">{{ selectedTemplate.type }} template</p>
+      <h2>{{ selectedTemplate.name }}</h2>
+      <label>Subject<input class="form-control" [(ngModel)]="composeSubject"></label>
+      <label>Body<textarea class="form-control" rows="6" [(ngModel)]="composeBody"></textarea></label>
+      <div class="tracking-grid">
+        <div><span>Open rate</span><strong>{{ selectedTemplate.opens }}%</strong></div>
+        <div><span>Click rate</span><strong>{{ selectedTemplate.clicks }}%</strong></div>
+        <div><span>Replies</span><strong>{{ selectedTemplate.replies }}</strong></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="sendTest()">Send Test</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openRecord(selectedTemplate)">Open CRM Record</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Bulk Email Queue</h2>
+      <article class="bulk-card" *ngFor="let job of bulkJobs" [class.active]="selectedJobId === job.id" (click)="selectedJobId = job.id">
+        <div>
+          <strong>{{ job.audience }}</strong>
+          <span>{{ job.template }} | {{ job.recipients }} recipients</span>
+        </div>
+        <b>{{ job.status }}</b>
+      </article>
+      <div class="queue-summary">
+        <span>Selected job</span>
+        <strong>{{ selectedJob.template }}</strong>
+        <p>{{ selectedJob.sent }} sent, {{ selectedJob.opened }} opened, {{ selectedJob.clicked }} clicked.</p>
+        <button class="btn btn-danger w-100" type="button" (click)="scheduleBulkJob()">Schedule Campaign</button>
+      </div>
+    </section>
+  </div>
+</div>

@@ -1,0 +1,60 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Calling workspace</p>
+      <h1>Telephony</h1>
+      <p>Run click-to-call, missed call follow-ups, recordings, and call logs against CRM records.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Total calls</span><strong>{{ callLogs.length }}</strong></div>
+    <div><span>Missed/voicemail</span><strong>{{ missedCalls }}</strong></div>
+    <div><span>Recordings</span><strong>{{ recordings }}</strong></div>
+    <div><span>Callback tasks</span><strong>{{ callbackTasks }}</strong></div>
+  </div>
+
+  <div class="provider-grid">
+    <section class="provider-card" *ngFor="let provider of providers" [class.offline]="provider.status === 'Not connected'">
+      <i class="fas" [ngClass]="provider.icon"></i>
+      <div><strong>{{ provider.name }}</strong><span>{{ provider.status }} | {{ provider.number }}</span><small>{{ provider.health }}</small></div>
+    </section>
+  </div>
+
+  <div class="call-layout">
+    <section class="panel">
+      <h2>CRM Call Queue</h2>
+      <article class="call-row" *ngFor="let call of callLogs" [class.active]="selectedCallId === call.id" (click)="selectedCallId = call.id">
+        <div>
+          <strong>{{ call.person }}</strong>
+          <span>{{ call.relatedName }} | {{ call.phone }}</span>
+        </div>
+        <b [class.missed]="call.outcome === 'Missed' || call.outcome === 'Voicemail'">{{ call.outcome }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedCall.relatedType | titlecase }}</p>
+      <h2>{{ selectedCall.person }}</h2>
+      <p>{{ selectedCall.company }} | {{ selectedCall.relatedName }}</p>
+      <div class="detail-grid">
+        <div><span>Phone</span><strong>{{ selectedCall.phone }}</strong></div>
+        <div><span>Duration</span><strong>{{ selectedCall.duration }}</strong></div>
+        <div><span>Outcome</span><strong>{{ selectedCall.outcome }}</strong></div>
+        <div><span>Recording</span><strong>{{ selectedCall.recording }}</strong></div>
+      </div>
+      <div class="transcript-box">
+        <strong>Transcript summary</strong>
+        <p>{{ selectedCall.transcript }}</p>
+      </div>
+      <div class="next-step"><i class="fas fa-bolt"></i>{{ selectedCall.nextAction }}</div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="startCall(selectedCall)">Click to Call</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="createCallbackTask(selectedCall)">Create Task</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openRecord(selectedCall)">Open Record</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openNextStep(selectedCall)">Open Next Step</button>
+      </div>
+    </section>
+  </div>
+</div>

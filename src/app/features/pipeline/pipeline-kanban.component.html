@@ -1,0 +1,127 @@
+<div class="pipeline-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Sales pipeline</p>
+      <h1>Pipeline</h1>
+      <p class="page-subtitle">Move opportunities through the same deal, product, quote, negotiation, and closure flow.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="addNewDeal()">
+        <i class="fas fa-plus"></i>
+        New Deal
+      </button>
+    </div>
+  </div>
+
+  <div class="pipeline-stats">
+    <div>
+      <span>Total pipeline</span>
+      <strong>{{ totalPipelineValue | currency:'USD':'symbol':'1.0-0' }}</strong>
+    </div>
+    <div>
+      <span>Weighted forecast</span>
+      <strong>{{ weightedForecast | currency:'USD':'symbol':'1.0-0' }}</strong>
+    </div>
+    <div>
+      <span>Deals in motion</span>
+      <strong>{{ allDeals.length }}</strong>
+    </div>
+    <div>
+      <span>Needs attention</span>
+      <strong>{{ highRiskDeals }}</strong>
+    </div>
+  </div>
+
+  <div class="pipeline-toolbar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="search" [(ngModel)]="searchQuery" placeholder="Search deals, companies, owners, stages">
+    </div>
+  </div>
+
+  <div class="pipeline-layout">
+    <section class="kanban-board">
+      <div class="kanban-column" *ngFor="let stage of stages" [class.drop-active]="dragOverStage === stage.id">
+        <div class="stage-header">
+          <div>
+            <h2>{{ stage.name }}</h2>
+            <span>{{ stage.totalValue | currency:'USD':'symbol':'1.0-0' }}</span>
+          </div>
+          <b>{{ stage.dealCount }}</b>
+        </div>
+
+        <div
+          class="deals-list"
+          (drop)="onDrop($event, stage.id)"
+          (dragover)="allowDrop($event, stage.id)"
+          (dragleave)="clearDragState()">
+          <article
+            class="deal-card"
+            *ngFor="let deal of getDealsByStage(stage.id)"
+            draggable="true"
+            [class.selected]="selectedDeal?.id === deal.id"
+            (dragstart)="onDragStart($event, deal)"
+            (dragend)="clearDragState()"
+            (click)="selectDeal(deal)">
+            <div class="deal-header">
+              <strong>{{ deal.name }}</strong>
+              <span class="badge" [class]="'bg-' + getDealStatusColor(deal.status)">
+                {{ getStatusLabel(deal.status) | titlecase }}
+              </span>
+            </div>
+            <p>{{ getCompanyName(deal) }}</p>
+            <div class="deal-metrics">
+              <span>{{ deal.amount | currency:'USD':'symbol':'1.0-0' }}</span>
+              <span>{{ deal.probability }}%</span>
+              <span>{{ deal.lineItems?.length || 0 }} products</span>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" [style.width.%]="deal.probability"></div>
+            </div>
+            <div class="next-action">
+              <i class="fas fa-bolt"></i>
+              {{ getNextAction(deal) }}
+            </div>
+          </article>
+
+          <div *ngIf="getDealsByStage(stage.id).length === 0" class="empty-state">
+            <i class="fas fa-inbox"></i>
+            No deals
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="deal-inspector" *ngIf="selectedDeal">
+      <p class="eyebrow">{{ selectedDeal.stage }}</p>
+      <h2>{{ selectedDeal.name }}</h2>
+      <p>{{ getCompanyName(selectedDeal) }}</p>
+
+      <div class="inspector-grid">
+        <div>
+          <span>Amount</span>
+          <strong>{{ selectedDeal.amount | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Probability</span>
+          <strong>{{ selectedDeal.probability }}%</strong>
+        </div>
+        <div>
+          <span>Quote</span>
+          <strong>{{ selectedDeal.quoteId || 'Pending' }}</strong>
+        </div>
+        <div>
+          <span>Owner</span>
+          <strong>{{ selectedDeal.owner?.firstName }} {{ selectedDeal.owner?.lastName }}</strong>
+        </div>
+      </div>
+
+      <div class="inspector-actions">
+        <button class="btn btn-danger" type="button" (click)="openDeal(selectedDeal)">Open Deal</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openProducts(selectedDeal)">Products</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openNegotiation(selectedDeal)">Negotiation</button>
+      </div>
+    </aside>
+  </div>
+</div>

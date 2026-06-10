@@ -1,0 +1,221 @@
+<div class="modal-header">
+  <h4 class="modal-title">{{ formTitle }}</h4>
+  <button
+    type="button"
+    class="btn-close"
+    aria-label="Close"
+    (click)="activeModal.dismiss()"
+  ></button>
+</div>
+
+<form [formGroup]="leadForm" (ngSubmit)="onSubmit()">
+  <div class="modal-body">
+    <!-- Basic Information -->
+    <div class="form-section">
+      <h6 class="section-title">Basic Information</h6>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label"
+            >First Name <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            class="form-control"
+            formControlName="firstName"
+            [class.is-invalid]="isFieldInvalid('firstName')"
+            placeholder="Enter first name"
+          />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('firstName')">
+            {{ getFieldError('firstName') }}
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label"
+            >Last Name <span class="text-danger">*</span></label
+          >
+          <input
+            type="text"
+            class="form-control"
+            formControlName="lastName"
+            [class.is-invalid]="isFieldInvalid('lastName')"
+            placeholder="Enter last name"
+          />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('lastName')">
+            {{ getFieldError('lastName') }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label"
+            >Email <span class="text-danger">*</span></label
+          >
+          <input
+            type="email"
+            class="form-control"
+            formControlName="email"
+            [class.is-invalid]="isFieldInvalid('email')"
+            placeholder="Enter email address"
+          />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('email')">
+            {{ getFieldError('email') }}
+          </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Phone</label>
+          <input
+            type="tel"
+            class="form-control"
+            formControlName="phone"
+            [class.is-invalid]="isFieldInvalid('phone')"
+            placeholder="+1 (555) 123-4567"
+          />
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('phone')">
+            {{ getFieldError('phone') }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Company Information -->
+    <div class="form-section">
+      <h6 class="section-title">Company Information</h6>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Company Name</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="companyName"
+            placeholder="Enter company name"
+          />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Job Title</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="jobTitle"
+            placeholder="e.g., Sales Manager"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Lead Information -->
+    <div class="form-section">
+      <h6 class="section-title">Lead Information</h6>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Lead Source</label>
+          <select class="form-select" formControlName="leadSource">
+            <option *ngFor="let source of leadSources" [value]="source">
+              {{ source }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Source Category</label>
+          <select class="form-select" formControlName="sourceCategory">
+            <option *ngFor="let category of sourceCategories" [value]="category">
+              {{ category }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Territory</label>
+          <select class="form-select" formControlName="territory">
+            <option value="">Select territory</option>
+            <option *ngFor="let territory of territories" [value]="territory">
+              {{ territory }}
+            </option>
+          </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">UTM / Campaign Source</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="utmSource"
+            placeholder="e.g., Google Ads, Facebook"
+          />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Assigned To</label>
+          <input
+            type="text"
+            class="form-control"
+            formControlName="assignedTo"
+            placeholder="Leave blank to add to unassigned queue"
+          />
+        </div>
+
+        <div class="col-md-6 mb-3">
+          <label class="form-label">Lead Status</label>
+          <select class="form-select" formControlName="leadStatus">
+            <option *ngFor="let status of leadStatuses" [value]="status">
+              {{ status }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">Lead Score</label>
+        <input
+          type="range"
+          class="form-range"
+          min="0"
+          max="100"
+          formControlName="leadScore"
+        />
+        <small class="text-muted"
+          >Score: {{ leadForm.get('leadScore')?.value }}/100</small
+        >
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Footer -->
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="activeModal.dismiss()"
+    >
+      Cancel
+    </button>
+    <button
+      type="submit"
+      class="btn btn-primary"
+      [disabled]="leadForm.invalid || loading"
+    >
+      <span *ngIf="!loading">
+        <i class="fas fa-save me-2"></i>Create Lead
+      </span>
+      <span *ngIf="loading">
+        <span
+          class="spinner-border spinner-border-sm me-2"
+          role="status"
+          aria-hidden="true"
+        ></span>
+        Saving...
+      </span>
+    </button>
+  </div>
+</form>

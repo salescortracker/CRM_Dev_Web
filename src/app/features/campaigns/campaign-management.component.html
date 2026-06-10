@@ -1,0 +1,240 @@
+<div class="campaigns-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Campaign workspace</p>
+      <h1>Campaigns</h1>
+      <p>Plan campaigns, track responses, and move interested people into leads, engagement, and follow-up tasks.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="openBuilder()">
+        <i class="fas fa-plus"></i>
+        New Campaign
+      </button>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric-card">
+      <span>Active campaigns</span>
+      <strong>{{ activeCampaigns }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Leads generated</span>
+      <strong>{{ totalLeadsGenerated }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Sent messages</span>
+      <strong>{{ sentMessages }}</strong>
+    </div>
+    <div class="metric-card">
+      <span>Avg open rate</span>
+      <strong>{{ averageOpenRate }}%</strong>
+    </div>
+  </div>
+
+  <div class="campaign-shell" [class.profile-open]="detailMode">
+    <aside class="campaign-sidebar" *ngIf="detailMode">
+      <div class="sidebar-head">
+        <span>Campaigns</span>
+        <button type="button" class="icon-button" (click)="closeCampaignProfile()" title="Close profile">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <button
+        class="name-row"
+        type="button"
+        *ngFor="let campaign of campaigns"
+        [class.active]="selectedCampaign?.id === campaign.id"
+        (click)="selectCampaign(campaign)">
+        <span>{{ campaign.name }}</span>
+        <small>{{ campaign.status }}</small>
+      </button>
+    </aside>
+
+    <section class="campaign-overview" *ngIf="!detailMode">
+      <div class="section-toolbar">
+        <div>
+          <h2>Campaign Pipeline</h2>
+          <p>Click any campaign row to review performance and take the next action.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" (click)="openBuilder()">
+          Use Template
+        </button>
+      </div>
+
+      <div class="campaign-table">
+        <div class="table-head">
+          <span>Campaign</span>
+          <span>Audience</span>
+          <span>Channels</span>
+          <span>Status</span>
+          <span>Leads</span>
+          <span>Budget / Spend</span>
+          <span>Conversion</span>
+          <span>Next action</span>
+        </div>
+        <button class="table-row" type="button" *ngFor="let campaign of campaigns" (click)="selectCampaign(campaign)">
+          <span class="campaign-name">
+            <strong>{{ campaign.name }}</strong>
+            <small>{{ campaign.goal }} | {{ campaign.owner }}</small>
+          </span>
+          <span>{{ campaign.audience }}</span>
+          <span class="channel-stack">
+            <b *ngFor="let channel of campaign.channels">{{ channel }}</b>
+          </span>
+          <span>
+            <em class="status-badge" [ngClass]="getStatusClass(campaign.status)">{{ campaign.status }}</em>
+          </span>
+          <span>{{ campaign.leadsGenerated }}</span>
+          <span>{{ campaign.budget | currency:'USD':'symbol':'1.0-0' }} / {{ campaign.spend | currency:'USD':'symbol':'1.0-0' }}</span>
+          <span>{{ campaign.conversionRate }}%</span>
+          <span class="next-action">{{ campaign.nextStep }}</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="campaign-profile" *ngIf="detailMode && selectedCampaign">
+      <div class="profile-hero">
+        <div>
+          <em class="status-badge" [ngClass]="getStatusClass(selectedCampaign.status)">{{ selectedCampaign.status }}</em>
+          <h2>{{ selectedCampaign.name }}</h2>
+          <p>{{ selectedCampaign.audience }} | Owner: {{ selectedCampaign.owner }}</p>
+        </div>
+        <div class="profile-actions">
+          <button class="btn btn-danger" type="button" (click)="toggleCampaign(selectedCampaign)">
+            {{ selectedCampaign.status === 'Active' ? 'Pause' : 'Launch' }}
+          </button>
+          <button class="btn btn-outline-secondary" type="button" (click)="closeCampaignProfile()">Close</button>
+        </div>
+      </div>
+
+      <div class="profile-grid">
+        <div>
+          <span>Budget</span>
+          <strong>{{ selectedCampaign.budget | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Spend</span>
+          <strong>{{ selectedCampaign.spend | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Revenue</span>
+          <strong>{{ selectedCampaign.revenue | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>ROI</span>
+          <strong>{{ trackROI(selectedCampaign) }}</strong>
+        </div>
+      </div>
+
+      <div class="campaign-progress">
+        <div>
+          <label>Open rate <b>{{ selectedCampaign.openRate }}%</b></label>
+          <div class="progress"><div class="progress-bar" [style.width.%]="selectedCampaign.openRate"></div></div>
+        </div>
+        <div>
+          <label>Conversion <b>{{ selectedCampaign.conversionRate }}%</b></label>
+          <div class="progress"><div class="progress-bar conversion" [style.width.%]="selectedCampaign.conversionRate"></div></div>
+        </div>
+      </div>
+
+      <div class="profile-columns">
+        <div class="info-panel">
+          <h3>Campaign Setup</h3>
+          <div class="info-list">
+            <span>Goal</span><strong>{{ selectedCampaign.goal }}</strong>
+            <span>Start</span><strong>{{ selectedCampaign.startDate }}</strong>
+            <span>End</span><strong>{{ selectedCampaign.endDate }}</strong>
+            <span>Messages sent</span><strong>{{ selectedCampaign.sentMessages }}</strong>
+          </div>
+          <div class="channel-row">
+            <span *ngFor="let channel of selectedCampaign.channels">{{ channel }}</span>
+          </div>
+        </div>
+
+        <div class="info-panel">
+          <h3>Recommended Next Step</h3>
+          <div class="next-step">
+            <i class="fas fa-bolt"></i>
+            <span>{{ selectedCampaign.nextStep }}</span>
+          </div>
+          <div class="detail-actions">
+            <button class="btn btn-outline-secondary" type="button" (click)="openLeads()">View Leads</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="openEngagement()">Open Engagement</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="createFollowUpTask()">Create Follow-up Task</button>
+            <button class="btn btn-outline-secondary" type="button" (click)="showRoi()">View Campaign ROI</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="roi-panel" *ngIf="showRoiPanel">
+        <div>
+          <span>Revenue</span>
+          <strong>{{ selectedCampaign.revenue | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Spend</span>
+          <strong>{{ selectedCampaign.spend | currency:'USD':'symbol':'1.0-0' }}</strong>
+        </div>
+        <div>
+          <span>Calculated ROI</span>
+          <strong>{{ trackROI(selectedCampaign) }}</strong>
+        </div>
+      </div>
+    </section>
+
+    <aside class="builder-panel" *ngIf="showBuilder">
+      <div class="builder-head">
+        <div>
+          <p class="eyebrow">Create</p>
+          <h2>New Campaign</h2>
+        </div>
+        <button type="button" class="icon-button" (click)="closeBuilder()" title="Close form">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <label>Template</label>
+      <select class="form-control" (change)="selectTemplate($any($event.target).value)">
+        <option value="">Start from blank</option>
+        <option *ngFor="let template of templates" [value]="template.id">{{ template.name }}</option>
+      </select>
+
+      <label>Campaign name</label>
+      <input class="form-control" [(ngModel)]="campaignName" placeholder="Campaign name">
+
+      <label>Audience</label>
+      <input class="form-control" [(ngModel)]="campaignAudience" placeholder="Audience">
+
+      <label>Goal</label>
+      <select class="form-control" [(ngModel)]="campaignGoal">
+        <option *ngFor="let goal of campaignGoals" [value]="goal">{{ goal }}</option>
+      </select>
+
+      <label>Channels</label>
+      <div class="channel-picker">
+        <button type="button" *ngFor="let channel of allChannels" [class.active]="campaignChannels.includes(channel)" (click)="toggleChannel(channel)">
+          {{ channel }}
+        </button>
+      </div>
+
+      <div class="builder-dates">
+        <div>
+          <label>Start date</label>
+          <input class="form-control" type="date" [(ngModel)]="campaignStartDate">
+        </div>
+        <div>
+          <label>End date</label>
+          <input class="form-control" type="date" [(ngModel)]="campaignEndDate">
+        </div>
+      </div>
+
+      <label>Budget</label>
+      <input class="form-control" type="number" [(ngModel)]="campaignBudget" placeholder="Budget">
+
+      <p class="template-note" *ngIf="selectedTemplateDescription">{{ selectedTemplateDescription }}</p>
+      <button class="btn btn-danger w-100" type="button" (click)="createCampaign()">Save Campaign</button>
+    </aside>
+  </div>
+</div>

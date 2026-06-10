@@ -1,0 +1,60 @@
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Automation</p>
+      <h1>Workflows</h1>
+      <p>Create trigger-based automations for lead assignment, emails, tasks, and SLA follow-up.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Total workflows</span><strong>{{ workflows.length }}</strong></div>
+    <div><span>Active workflows</span><strong>{{ activeWorkflows }}</strong></div>
+  </div>
+
+  <div class="admin-layout">
+    <section class="list-panel">
+      <h2>Workflow List</h2>
+      <button class="list-row" type="button" *ngFor="let workflow of workflows" [class.active]="selectedWorkflow?.id === workflow.id" (click)="selectWorkflow(workflow)">
+        <span><strong>{{ workflow.name }}</strong><small>{{ workflow.trigger }}</small></span>
+        <em [class.paused]="workflow.status === 'Paused'">{{ workflow.status }}</em>
+      </button>
+    </section>
+
+    <section class="detail-panel" *ngIf="selectedWorkflow">
+      <div class="detail-hero">
+        <div>
+          <p class="eyebrow">{{ selectedWorkflow.trigger }}</p>
+          <h2>{{ selectedWorkflow.name }}</h2>
+          <p>{{ selectedWorkflow.sla }}</p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="simulateRun(selectedWorkflow)">Test Run</button>
+          <button class="btn btn-danger" type="button" (click)="toggleWorkflow(selectedWorkflow)">{{ selectedWorkflow.status === 'Active' ? 'Pause' : 'Activate' }}</button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div><span>Runs</span><strong>{{ selectedWorkflow.runs }}</strong></div>
+        <div><span>Success</span><strong>{{ selectedWorkflow.successRate }}%</strong></div>
+        <div><span>Status</span><strong>{{ selectedWorkflow.status }}</strong></div>
+      </div>
+
+      <div class="builder-card">
+        <h3>Trigger</h3>
+        <select class="form-control" [(ngModel)]="selectedWorkflow.trigger">
+          <option *ngFor="let trigger of triggers" [value]="trigger">{{ trigger }}</option>
+        </select>
+      </div>
+
+      <div class="builder-card">
+        <h3>Actions</h3>
+        <div class="action-step" *ngFor="let action of selectedWorkflow.actions; let i = index">
+          <span>{{ i + 1 }}</span>
+          <strong>{{ action }}</strong>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

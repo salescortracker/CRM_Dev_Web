@@ -1,0 +1,534 @@
+<div class="dashboard-container">
+  <!-- Welcome Banner -->
+  <div class="welcome-banner">
+    <div>
+      <h2 class="welcome-title">Welcome, {{ dashboardFirstName }}</h2>
+      <p class="welcome-date">{{ getFormattedDate() }}</p>
+    </div>
+  </div>
+
+  <!-- Top KPI Cards -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-label">Pipeline Value</div>
+        <div class="kpi-icon"><i class="fas fa-chart-line"></i></div>
+      </div>
+      <div class="kpi-value">{{ formatCurrencyShort(metrics.totalPipeline) }}</div>
+      <div class="kpi-trend trend-up">
+        <i class="fas fa-arrow-up"></i>
+        <span>12% this month</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-label">Expected Revenue</div>
+        <div class="kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+      </div>
+      <div class="kpi-value">{{ formatCurrencyShort(metrics.expectedRevenue) }}</div>
+      <div class="kpi-trend trend-up">
+        <i class="fas fa-arrow-up"></i>
+        <span>8% increase</span>
+      </div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-label">Deals This Month</div>
+        <div class="kpi-icon"><i class="far fa-handshake"></i></div>
+      </div>
+      <div class="kpi-value">{{ metrics.dealsThisMonth }}</div>
+      <div class="kpi-trend trend-muted">{{ metrics.winRate }}% win rate</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-header">
+        <div class="kpi-label">Hot Leads (80+)</div>
+        <div class="kpi-icon"><i class="far fa-star"></i></div>
+      </div>
+      <div class="kpi-value">{{ metrics.hotLeads }}</div>
+      <div class="kpi-trend trend-brand">Needs immediate action</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="row mb-4">
+    <!-- Pipeline Overview Chart -->
+    <div class="col-lg-4 mb-4">
+      <div class="card dashboard-chart-card">
+        <div class="dashboard-chart-body">
+          <h5 class="chart-title">Pipeline Overview</h5>
+          <div *ngIf="loading" class="text-center py-5">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Loading...</span>
+            </div>
+          </div>
+          <div *ngIf="!loading && isBrowser" class="chart-canvas-wrap">
+            <canvas
+              baseChart
+              [data]="pipelineChartData"
+              [options]="pipelineChartOptions"
+              type="bar"
+            >
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Revenue Trend Chart -->
+    <div class="col-lg-4 mb-4">
+      <div class="card dashboard-chart-card">
+        <div class="dashboard-chart-body">
+          <h5 class="chart-title">Revenue Trend</h5>
+          <div *ngIf="!loading && isBrowser" class="chart-canvas-wrap">
+            <canvas
+              baseChart
+              [data]="revenueChartData"
+              [options]="revenueChartOptions"
+              type="line"
+            >
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lead Source Distribution -->
+    <div class="col-lg-4 mb-4">
+      <div class="card dashboard-chart-card">
+        <div class="dashboard-chart-body">
+          <h5 class="chart-title">Lead Sources</h5>
+          <div *ngIf="!loading && isBrowser" class="chart-canvas-wrap doughnut-wrap">
+            <canvas
+              baseChart
+              [data]="leadSourceChartData"
+              [options]="leadSourceChartOptions"
+              type="doughnut"
+            >
+            </canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pipeline Summary & Leads Overview -->
+  <div class="row mb-4">
+    <!-- Pipeline Summary -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Pipeline Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="pipeline-item">
+            <div class="pipeline-stage">Prospecting</div>
+            <div class="pipeline-meta">
+              {{ pipelineData.prospecting.count }} deals
+            </div>
+            <div class="pipeline-value">
+              {{ pipelineData.prospecting.value | currency }}
+            </div>
+            <div class="pipeline-bar">
+              <div
+                class="pipeline-fill"
+                [style.width.%]="
+                  (pipelineData.prospecting.value / metrics.totalPipeline) * 100
+                "
+              ></div>
+            </div>
+          </div>
+
+          <div class="pipeline-item">
+            <div class="pipeline-stage">Qualification</div>
+            <div class="pipeline-meta">
+              {{ pipelineData.qualification.count }} deals
+            </div>
+            <div class="pipeline-value">
+              {{ pipelineData.qualification.value | currency }}
+            </div>
+            <div class="pipeline-bar">
+              <div
+                class="pipeline-fill"
+                [style.width.%]="
+                  (pipelineData.qualification.value / metrics.totalPipeline) *
+                  100
+                "
+              ></div>
+            </div>
+          </div>
+
+          <div class="pipeline-item">
+            <div class="pipeline-stage">Proposal</div>
+            <div class="pipeline-meta">
+              {{ pipelineData.proposal.count }} deals
+            </div>
+            <div class="pipeline-value">
+              {{ pipelineData.proposal.value | currency }}
+            </div>
+            <div class="pipeline-bar">
+              <div
+                class="pipeline-fill"
+                [style.width.%]="
+                  (pipelineData.proposal.value / metrics.totalPipeline) * 100
+                "
+              ></div>
+            </div>
+          </div>
+
+          <div class="pipeline-item">
+            <div class="pipeline-stage">Negotiation</div>
+            <div class="pipeline-meta">
+              {{ pipelineData.negotiation.count }} deals
+            </div>
+            <div class="pipeline-value">
+              {{ pipelineData.negotiation.value | currency }}
+            </div>
+            <div class="pipeline-bar">
+              <div
+                class="pipeline-fill"
+                [style.width.%]="
+                  (pipelineData.negotiation.value / metrics.totalPipeline) * 100
+                "
+              ></div>
+            </div>
+          </div>
+
+          <div class="pipeline-item success">
+            <div class="pipeline-stage">Closed Won</div>
+            <div class="pipeline-meta">
+              {{ pipelineData.closedWon.count }} deals
+            </div>
+            <div class="pipeline-value">
+              {{ pipelineData.closedWon.value | currency }}
+            </div>
+            <div class="pipeline-bar success">
+              <div
+                class="pipeline-fill"
+                [style.width.%]="
+                  (pipelineData.closedWon.value / metrics.totalPipeline) * 100
+                "
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Leads Overview -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-flag"></i> Leads Overview</h5>
+            <a href="/leads" class="btn btn-sm btn-outline-primary">View All</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="lead-stats-grid">
+            <div class="lead-stat">
+              <div class="lead-stat-icon">
+                <i class="fas fa-list"></i>
+              </div>
+              <div class="lead-stat-info">
+                <div class="lead-stat-value">{{ leadStats.totalLeads }}</div>
+                <div class="lead-stat-label">Total Leads</div>
+              </div>
+            </div>
+
+            <div class="lead-stat success">
+              <div class="lead-stat-icon">
+                <i class="fas fa-fire"></i>
+              </div>
+              <div class="lead-stat-info">
+                <div class="lead-stat-value">{{ leadStats.highScore }}</div>
+                <div class="lead-stat-label">Hot (80+)</div>
+              </div>
+            </div>
+
+            <div class="lead-stat warning">
+              <div class="lead-stat-icon">
+                <i class="fas fa-hourglass-half"></i>
+              </div>
+              <div class="lead-stat-info">
+                <div class="lead-stat-value">{{ leadStats.mediumScore }}</div>
+                <div class="lead-stat-label">Warm (50-79)</div>
+              </div>
+            </div>
+
+            <div class="lead-stat danger">
+              <div class="lead-stat-icon">
+                <i class="fas fa-snowflake"></i>
+              </div>
+              <div class="lead-stat-info">
+                <div class="lead-stat-value">{{ leadStats.lowScore }}</div>
+                <div class="lead-stat-label">Cold (&lt;50)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="lead-conversion-stats mt-3">
+            <div class="conversion-item">
+              <span class="conversion-label">New This Month:</span>
+              <strong class="conversion-value">{{
+                leadStats.newLeadsThisMonth
+              }}</strong>
+            </div>
+            <div class="conversion-item">
+              <span class="conversion-label">Converted:</span>
+              <strong class="conversion-value">{{
+                leadStats.convertedThisMonth
+              }}</strong>
+            </div>
+            <div class="conversion-item">
+              <span class="conversion-label">Conversion Rate:</span>
+              <strong class="conversion-value"
+                >{{ leadStats.conversionRate }}%</strong
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Leads & Recent Deals -->
+  <div class="row mb-4">
+    <!-- Recent Leads -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Leads</h5>
+            <a href="/leads" class="text-decoration-none">See More →</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="recent-items-list">
+            <div class="recent-item" *ngFor="let lead of recentLeads">
+              <div class="item-avatar">
+                <img
+                  [src]="
+                    'https://ui-avatars.com/api/?name=' +
+                    lead.name +
+                    '&background=random'
+                  "
+                  alt="Avatar"
+                />
+              </div>
+              <div class="item-info">
+                <strong>{{ lead.name }}</strong>
+                <small class="text-muted"
+                  >{{ lead.company }} • {{ lead.source }}</small
+                >
+              </div>
+              <div class="item-score">
+                <span
+                  class="badge"
+                  [class]="'bg-' + getLeadScoreClass(lead.score)"
+                >
+                  {{ lead.score }}/100
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Deals -->
+    <div class="col-lg-6 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Deals</h5>
+            <a href="/deals" class="text-decoration-none">See More →</a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="recent-items-list">
+            <div class="recent-deal-item" *ngFor="let deal of recentDeals">
+              <div class="deal-info">
+                <strong>{{ deal.name }}</strong>
+                <small class="text-muted">{{ deal.company }}</small>
+              </div>
+              <div class="deal-amount">
+                {{ deal.amount | currency }}
+              </div>
+              <div class="deal-progress">
+                <small class="text-muted">{{ deal.stage }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activities, Notifications & Top Performers -->
+  <div class="row">
+    <!-- Recent Activities -->
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Recent Activities</h5>
+        </div>
+        <div class="card-body">
+          <div class="activity-list">
+            <div
+              class="activity-item"
+              *ngFor="let activity of recentActivities"
+            >
+              <div
+                class="activity-icon"
+                [class]="getActivityIconClass(activity.type)"
+              >
+                <i *ngIf="activity.type === 'call'" class="fas fa-phone"></i>
+                <i
+                  *ngIf="activity.type === 'email'"
+                  class="fas fa-envelope"
+                ></i>
+                <i
+                  *ngIf="activity.type === 'meeting'"
+                  class="fas fa-calendar-check"
+                ></i>
+                <i
+                  *ngIf="activity.type === 'deal'"
+                  class="fas fa-handshake"
+                ></i>
+              </div>
+              <div class="activity-content">
+                <strong>{{ activity.subject }}</strong>
+                <p>{{ activity.description }}</p>
+                <small class="text-muted">{{ activity.time }}</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notifications -->
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Notifications</h5>
+        </div>
+        <div class="card-body">
+          <div class="notification-list">
+            <div
+              class="notification-item"
+              [class]="'notification-' + notification.type"
+              *ngFor="let notification of recentNotifications"
+            >
+              <div class="notification-icon">
+                <i
+                  *ngIf="notification.type === 'info'"
+                  class="fas fa-info-circle"
+                ></i>
+                <i
+                  *ngIf="notification.type === 'success'"
+                  class="fas fa-check-circle"
+                ></i>
+                <i
+                  *ngIf="notification.type === 'warning'"
+                  class="fas fa-exclamation-circle"
+                ></i>
+                <i
+                  *ngIf="notification.type === 'danger'"
+                  class="fas fa-times-circle"
+                ></i>
+              </div>
+              <div class="notification-content">
+                <strong>{{ notification.title }}</strong>
+                <p>{{ notification.message }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="col-lg-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Top Performers</h5>
+        </div>
+        <div class="card-body">
+          <div class="performers-list">
+            <div
+              class="performer-item"
+              *ngFor="let performer of topPerformers; let i = index"
+            >
+              <div class="performer-rank">{{ i + 1 }}</div>
+              <div class="performer-avatar">
+                {{ performer.avatar }}
+              </div>
+              <div class="performer-info">
+                <strong>{{ performer.name }}</strong>
+                <small>{{ performer.deals }} deals</small>
+              </div>
+              <div class="performer-revenue">
+                {{ performer.revenue | currency : '' : 'compact' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">Quick Actions</h5>
+        </div>
+        <div class="card-body">
+          <div class="quick-action-grid">
+            <button class="quick-action-btn" (click)="quickAction('/contacts/add')">
+              <i class="fas fa-user-plus"></i>
+              <span>Add Contact</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/leads/add')">
+              <i class="fas fa-flag"></i>
+              <span>Add Lead</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/deals/new')">
+              <i class="fas fa-briefcase"></i>
+              <span>New Deal</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/activity')">
+              <i class="fas fa-calendar"></i>
+              <span>Schedule Activity</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/tasks')">
+              <i class="fas fa-check-circle"></i>
+              <span>Create Task</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/companies')">
+              <i class="fas fa-building"></i>
+              <span>Add Company</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/engagement')">
+              <i class="fas fa-envelope"></i>
+              <span>Send Email</span>
+            </button>
+            <button class="quick-action-btn" routerLink="/engagement">
+              <i class="fas fa-bullhorn"></i>
+              <span>Engagement Hub</span>
+            </button>
+            <button class="quick-action-btn" (click)="quickAction('/reports')">
+              <i class="fas fa-chart-bar"></i>
+              <span>View Reports</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

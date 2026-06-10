@@ -1,0 +1,57 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">WhatsApp and SMS</p>
+      <h1>Messaging</h1>
+      <p>Send WhatsApp/SMS templates, bulk reminders, OTPs, and track customer replies.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="channel-grid">
+    <section class="channel-card" *ngFor="let channel of channels">
+      <i class="fas" [ngClass]="channel.icon"></i>
+      <div><strong>{{ channel.name }}</strong><span>{{ channel.status }} | {{ channel.sender }}</span><small>{{ channel.health }}</small></div>
+    </section>
+  </div>
+
+  <div class="messaging-layout">
+    <section class="panel">
+      <h2>Approved Templates</h2>
+      <article class="template-row" *ngFor="let template of templates" [class.active]="selectedTemplateId === template.id" (click)="loadTemplate(template)">
+        <div><strong>{{ template.name }}</strong><span>{{ template.relatedName }} | {{ template.useCase }}</span></div>
+        <b>{{ template.channel }}</b>
+      </article>
+    </section>
+
+    <section class="panel composer-panel">
+      <p class="eyebrow">{{ selectedTemplate.channel }}</p>
+      <h2>{{ selectedTemplate.name }}</h2>
+      <textarea class="form-control" rows="6" [(ngModel)]="draftMessage" placeholder="Message body"></textarea>
+      <div class="tracking-grid">
+        <div><span>Delivered</span><strong>{{ selectedTemplate.delivered }}%</strong></div>
+        <div><span>Read</span><strong>{{ selectedTemplate.read }}%</strong></div>
+        <div><span>Replies</span><strong>{{ selectedTemplate.replies }}</strong></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="sendMessage()">Send to Selected</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="sendBulk()">Queue Bulk Send</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>CRM Conversations</h2>
+      <article class="conversation-row" *ngFor="let item of conversations" [class.active]="selectedConversationId === item.id" (click)="selectedConversationId = item.id">
+        <div><strong>{{ item.person }}</strong><span>{{ item.relatedName }} | {{ item.lastMessage }}</span></div>
+        <b>{{ item.status }}</b>
+      </article>
+      <div class="conversation-detail">
+        <span>{{ selectedConversation.channel }} conversation</span>
+        <strong>{{ selectedConversation.person }}</strong>
+        <p>{{ selectedConversation.nextAction }}</p>
+        <button class="btn btn-outline-secondary w-100" type="button" (click)="openRecord()">Open Record</button>
+        <button class="btn btn-danger w-100" type="button" (click)="openNextStep()">Open Next Step</button>
+      </div>
+    </section>
+  </div>
+</div>

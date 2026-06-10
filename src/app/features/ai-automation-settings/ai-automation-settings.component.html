@@ -1,0 +1,63 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">AI and automation settings</p>
+      <h1>AI Automation</h1>
+      <p>Configure lead scoring, next-best actions, smart reminders, assignment confidence, and chatbot behavior.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="ai-layout">
+    <section class="panel settings-panel">
+      <h2>Automation Controls</h2>
+      <label class="toggle-row"><span><strong>Lead scoring AI</strong><small>Score leads from source, engagement, and follow-up signals.</small></span><input type="checkbox" [(ngModel)]="aiLeadScoring"></label>
+      <label class="toggle-row"><span><strong>Next-best action</strong><small>Suggest deal, task, and follow-up actions.</small></span><input type="checkbox" [(ngModel)]="nextBestAction"></label>
+      <label class="toggle-row"><span><strong>Smart reminders</strong><small>Create reminders when records become stale.</small></span><input type="checkbox" [(ngModel)]="smartReminders"></label>
+      <label class="toggle-row"><span><strong>CRM chatbot</strong><small>Answer website questions and create leads.</small></span><input type="checkbox" [(ngModel)]="chatbotEnabled"></label>
+      <label>Auto assignment confidence<input class="form-control" type="number" [(ngModel)]="autoAssignmentThreshold"></label>
+      <label>Stale lead days<input class="form-control" type="number" [(ngModel)]="staleLeadDays"></label>
+      <label>Deal risk threshold<input class="form-control" type="number" [(ngModel)]="dealRiskThreshold"></label>
+      <button class="btn btn-danger w-100" type="button" (click)="saveSettings()">Save AI Settings</button>
+      <button class="btn btn-outline-secondary w-100" type="button" (click)="retrainModels()">Retrain Models</button>
+    </section>
+
+    <section class="panel">
+      <h2>Recommendations</h2>
+      <article
+        class="recommendation-row"
+        *ngFor="let recommendation of recommendations"
+        [class.active]="selectedRecommendationId === recommendation.id"
+        (click)="selectedRecommendationId = recommendation.id">
+        <div>
+          <strong>{{ recommendation.title }}</strong>
+          <span>{{ recommendation.recordName }} | {{ recommendation.reason }}</span>
+        </div>
+        <b>{{ recommendation.confidence }}%</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedRecommendation.type }}</p>
+      <h2>{{ selectedRecommendation.recordName }}</h2>
+      <p>{{ selectedRecommendation.reason }}</p>
+      <div class="confidence-meter">
+        <span [style.width.%]="selectedRecommendation.confidence"></span>
+      </div>
+      <strong>{{ selectedRecommendation.confidence }}% confidence</strong>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="applyRecommendation(selectedRecommendation)">Apply Suggestion</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openRecord(selectedRecommendation)">Open Record</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel logs-panel">
+    <h2>AI Activity Log</h2>
+    <article class="log-row" *ngFor="let log of aiLogs">
+      <strong>{{ log.time }}</strong>
+      <span>{{ log.event }}</span>
+      <b>{{ log.result }}</b>
+    </article>
+  </section>
+</div>

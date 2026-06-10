@@ -1,0 +1,84 @@
+<div class="reports-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Executive view</p>
+      <h1>Reports</h1>
+      <p class="page-subtitle">Explain pipeline health, revenue forecast, task risk, and lead-to-deal flow for clients.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <select class="form-control" [(ngModel)]="selectedPeriod">
+        <option>This Month</option>
+        <option>This Quarter</option>
+        <option>This Year</option>
+      </select>
+      <button class="btn btn-danger" type="button" (click)="exportReport()">Export</button>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <article class="metric-card" *ngFor="let metric of metrics">
+      <span><i class="fas" [ngClass]="metric.icon"></i></span>
+      <div>
+        <p>{{ metric.title }}</p>
+        <strong>{{ metric.value }}</strong>
+        <small>{{ metric.detail }}</small>
+      </div>
+    </article>
+  </div>
+
+  <div class="reports-layout">
+    <section class="report-panel">
+      <div class="section-heading">
+        <div>
+          <h2>Deal Stage Performance</h2>
+          <p>Matches the current Pipeline stages and deal data used in demos.</p>
+        </div>
+        <button class="btn btn-outline-secondary" type="button" (click)="openPipeline()">Open Pipeline</button>
+      </div>
+      <div class="stage-list">
+        <div class="stage-row" *ngFor="let stage of stagePerformance">
+          <div>
+            <strong>{{ stage.stage }}</strong>
+            <small>{{ stage.count }} deals • {{ stage.value | currency:'USD':'symbol':'1.0-0' }}</small>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" [style.width.%]="stage.percent"></div>
+          </div>
+          <b>{{ stage.percent }}%</b>
+        </div>
+      </div>
+    </section>
+
+    <aside class="report-panel">
+      <h2>Top Performers</h2>
+      <article class="performer" *ngFor="let performer of performers">
+        <strong>{{ performer.name }}</strong>
+        <span>{{ performer.role }}</span>
+        <b>{{ performer.metric }}</b>
+        <p>{{ performer.note }}</p>
+      </article>
+    </aside>
+  </div>
+
+  <section class="report-panel">
+    <div class="section-heading">
+      <div>
+        <h2>Connected Reports</h2>
+        <p>Each report opens the matching CRM workspace.</p>
+      </div>
+      <button class="btn btn-outline-secondary" type="button" (click)="openDeals()">Open Deals</button>
+    </div>
+    <div class="section-grid">
+      <article class="section-card" *ngFor="let section of reportSections">
+        <h3>{{ section.title }}</h3>
+        <p>{{ section.description }}</p>
+        <div>
+          <strong>{{ section.value }}</strong>
+          <span>{{ section.trend }}</span>
+        </div>
+        <button class="btn btn-danger" type="button" (click)="openReport(section)">View Details</button>
+      </article>
+    </div>
+  </section>
+</div>

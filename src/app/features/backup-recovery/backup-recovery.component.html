@@ -1,0 +1,73 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Backup and disaster recovery</p>
+      <h1>Backup & Recovery</h1>
+      <p>Create restore points, review backup logs, and verify recovery readiness before migrations or imports.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Restore points</span><strong>{{ restorePoints.length }}</strong></div>
+    <div><span>Completed</span><strong>{{ completedCount }}</strong></div>
+    <div><span>Running</span><strong>{{ runningCount }}</strong></div>
+  </div>
+
+  <div class="backup-layout">
+    <section class="panel">
+      <h2>Backup Schedule</h2>
+      <label>Frequency
+        <select class="form-control" [(ngModel)]="backupFrequency">
+          <option>Hourly</option>
+          <option>Daily</option>
+          <option>Weekly</option>
+        </select>
+      </label>
+      <label>Retention days<input class="form-control" type="number" [(ngModel)]="retentionDays"></label>
+      <label>Storage region
+        <select class="form-control" [(ngModel)]="storageRegion">
+          <option>US East</option>
+          <option>US West</option>
+          <option>India Central</option>
+          <option>Europe West</option>
+        </select>
+      </label>
+      <button class="btn btn-danger w-100" type="button" (click)="saveSchedule()">Save Schedule</button>
+      <button class="btn btn-outline-secondary w-100" type="button" (click)="createRestorePoint()">Create Restore Point</button>
+    </section>
+
+    <section class="panel">
+      <h2>Restore Points</h2>
+      <article class="restore-row" *ngFor="let point of restorePoints" [class.active]="selectedRestoreId === point.id" (click)="selectedRestoreId = point.id">
+        <div>
+          <strong>{{ point.name }}</strong>
+          <span>{{ point.tenant }} | {{ point.createdAt }} | {{ point.size }}</span>
+        </div>
+        <b [class.running]="point.status === 'Running'">{{ point.status }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedRestore.tenant }}</p>
+      <h2>{{ selectedRestore.name }}</h2>
+      <p>{{ selectedRestore.reason }}</p>
+      <div class="detail-grid">
+        <div><span>Status</span><strong>{{ selectedRestore.status }}</strong></div>
+        <div><span>Location</span><strong>{{ selectedRestore.location }}</strong></div>
+        <div><span>Size</span><strong>{{ selectedRestore.size }}</strong></div>
+      </div>
+      <button class="btn btn-danger w-100" type="button" (click)="simulateRestore()">Run Restore Simulation</button>
+      <button class="btn btn-outline-secondary w-100" type="button" (click)="restoreSnapshot()">Restore Template Snapshot</button>
+    </section>
+  </div>
+
+  <section class="panel logs-panel">
+    <h2>Backup Logs</h2>
+    <article class="log-row" *ngFor="let log of backupLogs">
+      <strong>{{ log.time }}</strong>
+      <span>{{ log.event }}</span>
+      <b>{{ log.result }}</b>
+    </article>
+  </section>
+</div>

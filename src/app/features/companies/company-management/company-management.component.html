@@ -1,0 +1,328 @@
+<div class="companies-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Account workspace</p>
+      <h1>Companies</h1>
+      <p class="page-subtitle">Manage customer accounts, contacts, credit health, and next sales actions.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-outline-secondary" type="button" (click)="resetForm()">
+        <i class="fas fa-plus"></i>
+        New Company
+      </button>
+    </div>
+  </div>
+
+  <div class="company-form-panel">
+    <div class="panel-title">
+      <div>
+        <h2>{{ editingCompanyId ? 'Edit Company' : 'Add Template Company' }}</h2>
+        <p>Use realistic company details so client demos show a complete CRM flow.</p>
+      </div>
+    </div>
+
+    <form #companyForm="ngForm" class="company-form">
+      <div class="form-grid">
+        <label>
+          Company Name *
+          <input class="form-control" type="text" name="name" [(ngModel)]="company.name" required>
+        </label>
+
+        <label>
+          Website
+          <input class="form-control" type="text" name="website" [(ngModel)]="company.website" placeholder="https://example.com">
+        </label>
+
+        <label>
+          Industry
+          <select class="form-control" name="industry" [(ngModel)]="company.industry">
+            <option value="">Select industry</option>
+            <option *ngFor="let industry of industries" [value]="industry">{{ industry }}</option>
+          </select>
+        </label>
+
+        <label>
+          Company Size
+          <input class="form-control" type="text" name="companySize" [(ngModel)]="company.companySize" placeholder="201-500">
+        </label>
+
+        <label>
+          Annual Revenue
+          <input class="form-control" type="number" name="annualRevenue" [(ngModel)]="company.annualRevenue">
+        </label>
+
+        <label>
+          Account Status
+          <select class="form-control" name="accountStatus" [(ngModel)]="company.accountStatus">
+            <option *ngFor="let status of statuses" [value]="status">{{ status | titlecase }}</option>
+          </select>
+        </label>
+
+        <label>
+          Phone
+          <input class="form-control" type="text" name="phone" [(ngModel)]="company.phone">
+        </label>
+
+        <label>
+          Email
+          <input class="form-control" type="email" name="email" [(ngModel)]="company.email">
+        </label>
+
+        <label>
+          City
+          <input class="form-control" type="text" name="city" [(ngModel)]="company.city">
+        </label>
+
+        <label>
+          State
+          <input class="form-control" type="text" name="state" [(ngModel)]="company.state">
+        </label>
+
+        <label>
+          Country
+          <input class="form-control" type="text" name="country" [(ngModel)]="company.country">
+        </label>
+
+        <label>
+          Zip Code
+          <input class="form-control" type="text" name="zipCode" [(ngModel)]="company.zipCode">
+        </label>
+
+        <label>
+          Credit Limit
+          <input class="form-control" type="number" name="creditLimit" [(ngModel)]="company.creditLimit">
+        </label>
+
+        <label>
+          Credit Used
+          <input class="form-control" type="number" name="creditUsed" [(ngModel)]="company.creditUsed">
+        </label>
+
+        <label>
+          Account Manager
+          <input class="form-control" type="text" name="accountManager" [(ngModel)]="company.accountManager">
+        </label>
+
+        <label>
+          Tags
+          <input class="form-control" type="text" name="tagsText" [(ngModel)]="company.tagsText" placeholder="enterprise, renewal, priority">
+        </label>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-outline-secondary" (click)="resetForm()">Reset</button>
+        <button *ngIf="!editingCompanyId" type="button" class="btn btn-danger" [disabled]="companyForm.invalid" (click)="saveCompany()">
+          Save Company
+        </button>
+        <button *ngIf="editingCompanyId" type="button" class="btn btn-danger" [disabled]="companyForm.invalid" (click)="updateCompany()">
+          Update Company
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="workspace-toolbar">
+    <div class="search-box">
+      <i class="fas fa-search"></i>
+      <input type="search" [(ngModel)]="searchQuery" placeholder="Search companies, industries, cities, tags">
+    </div>
+    <div class="summary-chip">{{ filteredCompanies.length }} companies</div>
+  </div>
+
+  <div *ngIf="loading" class="loading-state">
+    <i class="fas fa-circle-notch fa-spin"></i>
+    Loading companies
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div *ngIf="!selectedCompany" class="company-grid">
+      <article class="company-card" *ngFor="let c of filteredCompanies" (click)="selectCompany(c)" tabindex="0">
+        <div class="card-topline">
+          <span class="avatar">{{ c.name.charAt(0) }}</span>
+          <span class="account-status" [class.status-paused]="c.accountStatus !== 'active'">{{ c.accountStatus | titlecase }}</span>
+        </div>
+        <h3>{{ c.name }}</h3>
+        <p>{{ c.industry }} • {{ c.city }}, {{ c.country }}</p>
+        <div class="metrics-row">
+          <div>
+            <strong>{{ getCompanyContactsCount(c) }}</strong>
+            <span>Contacts</span>
+          </div>
+          <div>
+            <strong>{{ getOpenDealsValue(c) | currency:'USD':'symbol':'1.0-0' }}</strong>
+            <span>Open value</span>
+          </div>
+        </div>
+        <div class="credit-meter">
+          <div class="credit-copy">
+            <span>Credit used</span>
+            <strong>{{ getCreditUsagePercent(c) | number:'1.0-0' }}%</strong>
+          </div>
+          <div class="progress">
+            <div class="progress-bar" [ngClass]="getCreditUsageColor(c)" [style.width.%]="getCreditUsagePercent(c)"></div>
+          </div>
+        </div>
+        <div class="tag-row">
+          <span *ngFor="let tag of c.tags">{{ tag }}</span>
+        </div>
+        <div class="card-actions">
+          <button class="icon-button" type="button" title="Edit company" (click)="editCompany(c); $event.stopPropagation()">
+            <i class="fas fa-pen"></i>
+          </button>
+          <button class="icon-button danger" type="button" title="Delete company" (click)="deleteCompany(c.id); $event.stopPropagation()">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <div *ngIf="selectedCompany" class="company-detail-layout">
+      <aside class="company-sidebar">
+        <div class="sidebar-title">
+          <span>Company List</span>
+          <button type="button" class="icon-button" title="Close profile" (click)="closeCompanyProfile()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <button
+          type="button"
+          class="company-row"
+          *ngFor="let c of filteredCompanies"
+          [class.active]="selectedCompany.id === c.id"
+          (click)="selectCompany(c)">
+          <span class="mini-avatar">{{ c.name.charAt(0) }}</span>
+          <span>
+            <strong>{{ c.name }}</strong>
+            <small>{{ c.industry }} • {{ c.city }}</small>
+          </span>
+        </button>
+      </aside>
+
+      <section class="profile-panel">
+        <div class="profile-hero">
+          <div class="hero-main">
+            <span class="large-avatar">{{ selectedCompany.name.charAt(0) }}</span>
+            <div>
+              <p class="eyebrow">{{ selectedCompany.industry }}</p>
+              <h2>{{ selectedCompany.name }}</h2>
+              <p>{{ selectedCompany.website }} • {{ selectedCompany.city }}, {{ selectedCompany.country }}</p>
+              <div class="tag-row">
+                <span *ngFor="let tag of selectedCompany.tags">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="profile-actions">
+            <button class="btn btn-outline-secondary" type="button" (click)="editCompany(selectedCompany)">
+              <i class="fas fa-pen"></i>
+              Edit Company
+            </button>
+            <button class="btn btn-outline-secondary" type="button" (click)="viewContacts(selectedCompany)">
+              <i class="fas fa-users"></i>
+              View Contacts
+            </button>
+            <button class="btn btn-danger" type="button" (click)="createDeal(selectedCompany)">
+              <i class="fas fa-handshake"></i>
+              Create Deal
+            </button>
+          </div>
+        </div>
+
+        <div class="profile-grid">
+          <div class="info-panel">
+            <h3>Account Health</h3>
+            <div class="health-grid">
+              <div>
+                <span>Status</span>
+                <strong>{{ selectedCompany.accountStatus | titlecase }}</strong>
+              </div>
+              <div>
+                <span>Manager</span>
+                <strong>{{ selectedCompany.accountManager || 'Unassigned' }}</strong>
+              </div>
+              <div>
+                <span>Contacts</span>
+                <strong>{{ getCompanyContactsCount(selectedCompany) }}</strong>
+              </div>
+              <div>
+                <span>Open Deals</span>
+                <strong>{{ getOpenDealsValue(selectedCompany) | currency:'USD':'symbol':'1.0-0' }}</strong>
+              </div>
+            </div>
+            <div class="credit-block">
+              <div class="credit-copy">
+                <span>Available credit</span>
+                <strong>{{ getAvailableCredit(selectedCompany) | currency:'USD':'symbol':'1.0-0' }}</strong>
+              </div>
+              <div class="progress">
+                <div class="progress-bar" [ngClass]="getCreditUsageColor(selectedCompany)" [style.width.%]="getCreditUsagePercent(selectedCompany)"></div>
+              </div>
+              <small>{{ selectedCompany.creditUsed | currency:'USD':'symbol':'1.0-0' }} used of {{ selectedCompany.creditLimit | currency:'USD':'symbol':'1.0-0' }}</small>
+            </div>
+          </div>
+
+          <div class="info-panel">
+            <h3>Company Details</h3>
+            <dl class="detail-list">
+              <div>
+                <dt>Email</dt>
+                <dd>{{ selectedCompany.email || 'Not provided' }}</dd>
+              </div>
+              <div>
+                <dt>Phone</dt>
+                <dd>{{ selectedCompany.phone || 'Not provided' }}</dd>
+              </div>
+              <div>
+                <dt>Company size</dt>
+                <dd>{{ selectedCompany.companySize || 'Not provided' }}</dd>
+              </div>
+              <div>
+                <dt>Annual revenue</dt>
+                <dd>{{ selectedCompany.annualRevenue | currency:'USD':'symbol':'1.0-0' }}</dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="profile-grid lower-grid">
+          <div class="info-panel">
+            <div class="section-heading">
+              <h3>Addresses</h3>
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="addAddress(selectedCompany)">
+                <i class="fas fa-plus"></i>
+                Add Address
+              </button>
+            </div>
+            <div class="address-list">
+              <div class="address-item" *ngFor="let address of selectedCompany.addresses">
+                <strong>{{ address.type | titlecase }} Address</strong>
+                <p>{{ address.street }}, {{ address.city }}, {{ address.state }} {{ address.zipCode }}, {{ address.country }}</p>
+                <span *ngIf="address.isDefault">Default</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="info-panel">
+            <div class="section-heading">
+              <h3>Activity Timeline</h3>
+              <button class="btn btn-sm btn-outline-secondary" type="button" (click)="logActivity(selectedCompany)">
+                <i class="fas fa-list"></i>
+                Log Activity
+              </button>
+            </div>
+            <div class="timeline">
+              <div class="timeline-item" *ngFor="let event of getCompanyTimeline(selectedCompany)">
+                <span class="timeline-icon"><i class="fas" [ngClass]="event.icon"></i></span>
+                <div>
+                  <strong>{{ event.title }}</strong>
+                  <p>{{ event.detail }}</p>
+                  <small>{{ event.time }}</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>

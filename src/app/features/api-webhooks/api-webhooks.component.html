@@ -1,0 +1,64 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Developer operations</p>
+      <h1>API & Webhooks</h1>
+      <p>Manage API keys, event webhooks, usage logs, and tenant rate limits.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="workspace-grid">
+    <section class="panel">
+      <h2>API Keys</h2>
+      <article class="key-card" *ngFor="let key of apiKeys" [class.revoked]="key.status === 'Revoked'">
+        <div>
+          <strong>{{ key.name }}</strong>
+          <span>{{ key.key }} | {{ key.owner }}</span>
+          <small>{{ key.scopes.join(', ') }} | Last used {{ key.lastUsed }}</small>
+        </div>
+        <b>{{ key.status }}</b>
+        <div class="mini-actions">
+          <button type="button" (click)="regenerateKey(key)">Regenerate</button>
+          <button type="button" (click)="revokeKey(key)">Revoke</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <h2>Webhook Events</h2>
+        <button class="btn btn-danger" type="button" (click)="addWebhook()">Add Webhook</button>
+      </div>
+      <input class="form-control" [(ngModel)]="newEndpoint" placeholder="Endpoint URL">
+      <article class="hook-row" *ngFor="let webhook of webhooks" [class.active]="selectedWebhookId === webhook.id" (click)="selectedWebhookId = webhook.id">
+        <div><strong>{{ webhook.event }}</strong><span>{{ webhook.endpoint }}</span></div>
+        <b [class.failed]="webhook.status === 'Failed'">{{ webhook.status }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">Webhook payload</p>
+      <h2>{{ selectedWebhook.event }}</h2>
+      <div class="detail-grid">
+        <div><span>Status</span><strong>{{ selectedWebhook.status }}</strong></div>
+        <div><span>Failures</span><strong>{{ selectedWebhook.failures }}</strong></div>
+        <div><span>Last delivery</span><strong>{{ selectedWebhook.lastDelivery }}</strong></div>
+      </div>
+      <pre>{{ selectedWebhook.samplePayload }}</pre>
+      <button class="btn btn-danger w-100" type="button" (click)="testWebhook()">Send Test Event</button>
+    </section>
+  </div>
+
+  <section class="panel usage-panel">
+    <h2>Usage and Rate Limits</h2>
+    <div class="usage-grid">
+      <article *ngFor="let log of usageLogs">
+        <strong>{{ log.tenant }}</strong>
+        <span>{{ log.requests | number }} requests | {{ log.errors }} errors | {{ log.latency }} avg latency</span>
+        <div class="usage-bar"><i [style.width]="log.limit"></i></div>
+        <small>{{ log.limit }} of plan rate limit used</small>
+      </article>
+    </div>
+  </section>
+</div>

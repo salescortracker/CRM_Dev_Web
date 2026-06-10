@@ -1,0 +1,732 @@
+<div class="leads-page">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Leads</h1>
+      <p class="page-subtitle">Manage and qualify your sales leads</p>
+    </div>
+    <button class="btn-primary" type="button" (click)="openNewLeadModal()">
+      <i class="fas fa-plus"></i>
+      New Lead
+    </button>
+  </div>
+
+  <div *ngIf="activityMessage" class="activity-alert">
+    <i class="fas fa-circle-info"></i>
+    <span>{{ activityMessage }}</span>
+  </div>
+
+  <div class="stat-grid">
+    <section class="stat-card border-red">
+      <p class="stat-label">Total Leads</p>
+      <p class="stat-value">{{ leadStats.totalLeads }}</p>
+    </section>
+    <section class="stat-card border-green">
+      <p class="stat-label">High Score (80+)</p>
+      <p class="stat-value">{{ leadStats.highScore }}</p>
+    </section>
+    <section class="stat-card border-amber">
+      <p class="stat-label">Medium Score (50-79)</p>
+      <p class="stat-value">{{ leadStats.mediumScore }}</p>
+    </section>
+    <section class="stat-card border-coral">
+      <p class="stat-label">Low Score (&lt;50)</p>
+      <p class="stat-value">{{ leadStats.lowScore }}</p>
+    </section>
+    <section class="stat-card border-violet">
+      <p class="stat-label">Avg. Monthly Leads</p>
+      <p class="stat-value">{{ leadStats.avgMonthlyLeads }}</p>
+    </section>
+  </div>
+
+  <section class="section-card pending-section" *ngIf="unassignedLeads.length > 0">
+    <div class="pending-header">
+      <div>
+        <h2 class="section-title">Pending leads to assign</h2>
+        <p class="section-subtitle">Compact review queue for unassigned leads</p>
+      </div>
+      <button class="btn-primary btn-sm" type="button" (click)="autoAssignLeads()">
+        <i class="fas fa-check"></i>
+        Auto Assign All
+      </button>
+    </div>
+
+    <div class="pending-grid old-pending-grid">
+      <article class="pending-card-compact" *ngFor="let lead of unassignedLeads | slice:0:4">
+        <div>
+          <p class="lead-name">{{ lead.firstName }} {{ lead.lastName }}</p>
+          <p class="lead-company">{{ lead.companyName || 'No company' }}</p>
+        </div>
+
+        <div class="tag-row">
+          <span class="tag" [ngClass]="getLeadSourceClass(lead.leadSource)">{{ lead.leadSource || 'Unknown' }}</span>
+          <span class="tag tag-slate">{{ lead.territory || 'Unknown' }}</span>
+        </div>
+
+        <div *ngIf="selectedAssignmentLeadId === lead.id; else compactAssignButton" class="assignment-panel">
+          <select class="filter-select compact-select" [(ngModel)]="selectedAssignmentUser">
+            <option value="">Assign to...</option>
+            <option *ngFor="let user of assignmentUsers" [value]="user">{{ user }}</option>
+          </select>
+          <div class="assignment-actions">
+            <button class="btn-primary btn-sm" type="button" (click)="confirmLeadAssignment()">Confirm</button>
+            <button class="btn-outline btn-sm" type="button" (click)="cancelLeadAssignmentSelection()">Cancel</button>
+          </div>
+        </div>
+
+        <ng-template #compactAssignButton>
+          <div class="pending-card-footer">
+            <button class="assign-link" type="button" (click)="openLeadAssignment(lead)">Assign</button>
+            <span class="score-pill" [ngClass]="getLeadScoreClass(lead.leadScore)">{{ lead.leadScore }}/100</span>
+          </div>
+        </ng-template>
+      </article>
+
+      <article class="pending-card-compact pending-card-more" *ngIf="unassignedLeads.length > 4">
+        <strong>+{{ unassignedLeads.length - 4 }} more</strong>
+        <span>More unassigned leads are waiting in the queue.</span>
+      </article>
+    </div>
+  </section>
+
+  <section class="section-card filter-section">
+    <div class="search-row">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by name, email, company or keyword"
+          [(ngModel)]="searchQuery"
+          (keyup)="onSearch()">
+      </div>
+      <button class="btn-outline" type="button">
+        <i class="fas fa-download"></i>
+        Export
+      </button>
+    </div>
+
+    <div class="pill-row">
+      <button type="button" class="pill" [class.pill-active]="activeQuickFilter === 'all'" (click)="applyQuickFilter('all')">All Leads</button>
+      <button type="button" class="pill" [class.pill-active]="activeQuickFilter === 'hot'" (click)="applyQuickFilter('hot')">Hot Leads</button>
+      <button type="button" class="pill" [class.pill-active]="activeQuickFilter === 'unassigned'" (click)="applyQuickFilter('unassigned')">Unassigned</button>
+      <button type="button" class="pill" [class.pill-active]="activeQuickFilter === 'aged'" (click)="applyQuickFilter('aged')">Aged</button>
+      <button type="button" class="pill" [class.pill-active]="activeQuickFilter === 'assigned'" (click)="applyQuickFilter('assigned')">Assigned</button>
+    </div>
+
+    <div class="filter-row">
+      <select class="filter-select" [(ngModel)]="filters.leadStatus" (change)="onFilterChange()">
+        <option value="">Lead Status</option>
+        <option *ngFor="let status of leadStatuses" [value]="status">{{ status }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="filters.leadSource" (change)="onFilterChange()">
+        <option value="">Lead Source</option>
+        <option *ngFor="let source of leadSources" [value]="source">{{ source }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="filters.territory" (change)="onFilterChange()">
+        <option value="">Territory</option>
+        <option *ngFor="let territory of territories" [value]="territory">{{ territory }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="filters.assignment" (change)="onFilterChange()">
+        <option *ngFor="let assignment of assignmentOptions" [value]="assignment.value">{{ assignment.label }}</option>
+      </select>
+
+      <select class="filter-select" [(ngModel)]="filters.scoreRange" (change)="onFilterChange()">
+        <option value="">Score Range</option>
+        <option *ngFor="let range of scoreRanges" [value]="range.value">{{ range.label }}</option>
+      </select>
+
+      <button class="clear-btn" type="button" (click)="clearFilters()">Clear</button>
+      <span class="result-count">{{ totalRecords || leads.length }} leads</span>
+    </div>
+  </section>
+
+  <div *ngIf="loading" class="section-card loading-state">
+    <span class="spinner-border"></span>
+    Loading leads
+  </div>
+
+  <section class="split-panel section-card" *ngIf="!loading && selectedLead">
+    <aside class="mini-list">
+      <div class="mini-list-header">
+        <span class="mini-list-title">Lead Names</span>
+        <button class="close-btn" type="button" title="Close profile" (click)="closeLeadProfile()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="mini-list-body">
+        <button
+          type="button"
+          class="mini-item"
+          *ngFor="let lead of leads"
+          [class.mini-item-selected]="selectedLead.id === lead.id"
+          (click)="viewLead(lead.id)">
+          <p class="mini-name">{{ lead.firstName }} {{ lead.lastName }}</p>
+          <p class="mini-company">{{ lead.companyName || 'No company' }}</p>
+          <div class="mini-meta">
+            <span class="mini-dot" [ngClass]="'dot-' + getLeadTemperatureClass(lead.leadScore)"></span>
+            <span>{{ getLeadTemperatureLabel(lead.leadScore) }} | {{ lead.leadScore }}/100</span>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <section class="detail-panel">
+      <div class="detail-header lead-status-hero" [ngClass]="getLeadStatusClass(selectedLead.leadStatus)">
+        <div class="detail-identity">
+          <div class="detail-avatar">{{ getLeadInitials(selectedLead) }}</div>
+          <div>
+            <p class="detail-breadcrumb">{{ editMode ? 'Edit lead' : 'Selected lead' }}</p>
+            <h2 class="detail-name">{{ selectedLead.firstName }} {{ selectedLead.lastName }}</h2>
+            <p class="detail-sub">{{ selectedLead.jobTitle || 'Decision maker' }} at <strong>{{ selectedLead.companyName || 'Unknown company' }}</strong></p>
+            <div class="detail-tags">
+              <span class="tag tag-slate" *ngFor="let tag of getLeadProfileTags(selectedLead)">{{ tag }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-right">
+          <div class="score-box" [ngClass]="'score-box-' + getLeadTemperatureClass(selectedLead.leadScore)">
+            <p class="score-box-label">Score</p>
+            <p class="score-box-value">{{ selectedLead.leadScore }}<span>/100</span></p>
+            <div class="stars">
+              <i
+                *ngFor="let i of [1, 2, 3, 4, 5]"
+                class="fas fa-star"
+                [class.empty]="i > getLeadScoreStars(selectedLead.leadScore)">
+              </i>
+            </div>
+          </div>
+          <button class="close-btn" type="button" title="Close profile" (click)="closeLeadProfile()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="action-bar lead-profile-toolbar">
+        <button class="action-button action-blue" type="button" (click)="logCall(selectedLead)">
+          <i class="fas fa-phone"></i>
+          Log Call
+        </button>
+        <button class="action-button action-green" type="button" (click)="sendEmail(selectedLead)">
+          <i class="fas fa-envelope"></i>
+          Send Email
+        </button>
+        <button class="action-button action-purple" type="button" (click)="scheduleFollowUp(selectedLead)">
+          <i class="fas fa-calendar-plus"></i>
+          Follow-up
+        </button>
+        <button class="action-button action-amber" type="button" (click)="qualifyLead(selectedLead)" [disabled]="selectedLead.leadStatus === 'Converted'">
+          <i class="fas fa-star"></i>
+          Qualify
+        </button>
+        <button class="action-button action-slate" type="button" (click)="editLead(selectedLead.id)">
+          <i class="fas fa-edit"></i>
+          Edit Lead
+        </button>
+        <button class="btn-primary btn-sm ml-auto" type="button" (click)="convertLead(selectedLead.id)" [disabled]="selectedLead.leadStatus === 'Converted'">
+          <i class="fas fa-user-check"></i>
+          Convert Lead
+        </button>
+        <button class="action-button action-blue" type="button" *ngIf="selectedLead.convertedContactId" (click)="openConvertedContact(selectedLead)">
+          <i class="fas fa-address-card"></i>
+          Open Contact
+        </button>
+        <button class="action-button action-danger" type="button" (click)="deleteLead(selectedLead.id)">
+          <i class="fas fa-trash"></i>
+          Delete
+        </button>
+      </div>
+
+      <div class="lead-action-panel" *ngIf="activeLeadAction === 'call'">
+        <div class="action-panel-header">
+          <h3>Log Call</h3>
+          <button class="btn-outline btn-sm" type="button" (click)="closeLeadAction()">Close</button>
+        </div>
+        <div class="action-form-grid">
+          <label>
+            Outcome
+            <select class="filter-select full" [(ngModel)]="callOutcome">
+              <option>Connected</option>
+              <option>Left voicemail</option>
+              <option>No answer</option>
+              <option>Needs callback</option>
+            </select>
+          </label>
+          <label class="wide">
+            Notes
+            <textarea class="form-control" rows="3" [(ngModel)]="callNotes"></textarea>
+          </label>
+        </div>
+        <button class="btn-primary" type="button" (click)="saveCallLog()">Save Call</button>
+      </div>
+
+      <div class="lead-action-panel" *ngIf="activeLeadAction === 'email'">
+        <div class="action-panel-header">
+          <h3>Compose Email</h3>
+          <button class="btn-outline btn-sm" type="button" (click)="closeLeadAction()">Close</button>
+        </div>
+        <label>
+          Subject
+          <input class="form-control" [(ngModel)]="emailSubject">
+        </label>
+        <label>
+          Message
+          <textarea class="form-control" rows="5" [(ngModel)]="emailMessage"></textarea>
+        </label>
+        <button class="btn-primary" type="button" (click)="saveEmail()">Send Email</button>
+      </div>
+
+      <div class="lead-action-panel" *ngIf="activeLeadAction === 'followup'">
+        <div class="action-panel-header">
+          <div>
+            <h3>Schedule CRM Follow-up</h3>
+            <small>{{ selectedLead.firstName }} {{ selectedLead.lastName }}{{ selectedLead.companyName ? ' | ' + selectedLead.companyName : '' }}</small>
+          </div>
+          <button class="btn-outline btn-sm" type="button" (click)="closeLeadAction()">Close</button>
+        </div>
+
+        <div class="inline-meeting-warning" *ngIf="selectedLeadUpcomingMeetings.length">
+          <div class="warning-head">
+            <i class="fas fa-triangle-exclamation"></i>
+            <span>{{ selectedLeadUpcomingMeetings.length }} upcoming meeting{{ selectedLeadUpcomingMeetings.length === 1 ? '' : 's' }} already scheduled</span>
+            <button type="button" (click)="showLeadUpcomingMeetings = !showLeadUpcomingMeetings">
+              {{ showLeadUpcomingMeetings ? 'Hide' : 'View' }}
+            </button>
+          </div>
+          <div class="warning-meeting-row" *ngFor="let meeting of selectedLeadUpcomingMeetings" [hidden]="!showLeadUpcomingMeetings">
+            <strong>{{ meeting.title }}</strong>
+            <span>{{ meeting.date | date:'medium' }} | {{ meeting.provider }} | {{ meeting.purpose }} | Owner: {{ meeting.owner }}</span>
+          </div>
+        </div>
+
+        <div class="meeting-provider-grid">
+          <button
+            type="button"
+            *ngFor="let provider of followUpProviders"
+            class="meeting-provider"
+            [class.active]="followUpProvider === provider.name"
+            [class.disabled]="!provider.connected"
+            [disabled]="!provider.connected"
+            (click)="followUpProvider = provider.name">
+            <i [class]="'fas ' + provider.icon"></i>
+            <span>{{ provider.name }}</span>
+            <small>{{ provider.connected ? 'Available' : 'Needs setup' }}</small>
+          </button>
+        </div>
+
+        <div class="action-form-grid">
+          <label>
+            Purpose
+            <select class="filter-select full" [(ngModel)]="followUpPurpose">
+              <option *ngFor="let purpose of followUpPurposes" [value]="purpose">{{ purpose }}</option>
+            </select>
+          </label>
+          <label>
+            Reminder
+            <select class="filter-select full" [(ngModel)]="followUpReminder">
+              <option *ngFor="let reminder of followUpReminders" [value]="reminder">{{ reminder }}</option>
+            </select>
+          </label>
+          <label>
+            Date
+            <input class="form-control" type="date" [(ngModel)]="followUpDate">
+          </label>
+          <label>
+            Time
+            <input class="form-control" type="time" [(ngModel)]="followUpTime">
+          </label>
+          <label class="wide">
+            Notes
+            <textarea class="form-control" rows="3" [(ngModel)]="followUpNotes"></textarea>
+          </label>
+        </div>
+
+        <div class="schedule-summary">
+          <i class="fas fa-calendar-check"></i>
+          <span>This will stay linked to the selected lead and update the next follow-up date.</span>
+        </div>
+        <button class="btn-primary" type="button" (click)="saveFollowUp()">Schedule {{ followUpProvider }}</button>
+      </div>
+
+      <div class="lead-action-panel" *ngIf="activeLeadAction === 'qualify'">
+        <div class="action-panel-header">
+          <h3>Qualify Lead</h3>
+          <button class="btn-outline btn-sm" type="button" (click)="closeLeadAction()">Close</button>
+        </div>
+        <div class="qualification-list">
+          <span><i class="fas fa-check"></i> Fit reviewed</span>
+          <span><i class="fas fa-check"></i> Interest confirmed</span>
+          <span><i class="fas fa-check"></i> Timing captured</span>
+        </div>
+        <button class="btn-primary" type="button" (click)="confirmQualification()">Confirm Qualification</button>
+      </div>
+
+      <div class="lead-action-panel" *ngIf="activeLeadAction === 'convert'">
+        <div class="action-panel-header">
+          <h3>Convert Lead</h3>
+          <button class="btn-outline btn-sm" type="button" (click)="closeLeadAction()">Close</button>
+        </div>
+        <p>This will create a matching contact and keep the lead marked as converted.</p>
+        <button class="btn-primary" type="button" (click)="confirmConvertLead()">Convert to Contact</button>
+      </div>
+
+      <div class="detail-tabs">
+        <button class="tab" [class.tab-active]="activeLeadTab === 'overview'" type="button" (click)="setLeadTab('overview')">Overview</button>
+        <button class="tab" [class.tab-active]="activeLeadTab === 'activity'" type="button" (click)="setLeadTab('activity')">Activity</button>
+        <button class="tab" [class.tab-active]="activeLeadTab === 'notes'" type="button" (click)="setLeadTab('notes')">Notes</button>
+      </div>
+
+      <div class="lead-action-panel edit-lead-panel" *ngIf="editMode && activeLeadTab === 'overview'">
+        <div class="action-panel-header">
+          <div>
+            <h3>Edit Lead</h3>
+            <small>Update the selected lead profile without leaving this workspace.</small>
+          </div>
+          <button class="btn-outline btn-sm" type="button" (click)="cancelLeadEdit()">Cancel</button>
+        </div>
+
+        <div class="action-form-grid edit-form-grid">
+          <label>
+            First Name
+            <input class="form-control" [(ngModel)]="leadEditDraft.firstName">
+          </label>
+          <label>
+            Last Name
+            <input class="form-control" [(ngModel)]="leadEditDraft.lastName">
+          </label>
+          <label>
+            Email
+            <input class="form-control" type="email" [(ngModel)]="leadEditDraft.email">
+          </label>
+          <label>
+            Phone
+            <input class="form-control" [(ngModel)]="leadEditDraft.phone">
+          </label>
+          <label>
+            Company
+            <input class="form-control" [(ngModel)]="leadEditDraft.companyName">
+          </label>
+          <label>
+            Job Title
+            <input class="form-control" [(ngModel)]="leadEditDraft.jobTitle">
+          </label>
+          <label>
+            Lead Source
+            <select class="filter-select full" [(ngModel)]="leadEditDraft.leadSource">
+              <option *ngFor="let source of leadSources" [value]="source">{{ source }}</option>
+            </select>
+          </label>
+          <label>
+            Status
+            <select class="filter-select full" [(ngModel)]="leadEditDraft.leadStatus">
+              <option *ngFor="let status of leadStatuses" [value]="status">{{ status }}</option>
+            </select>
+          </label>
+          <label>
+            Territory
+            <select class="filter-select full" [(ngModel)]="leadEditDraft.territory">
+              <option value="">No territory</option>
+              <option *ngFor="let territory of territories" [value]="territory">{{ territory }}</option>
+            </select>
+          </label>
+          <label>
+            Owner
+            <select class="filter-select full" [(ngModel)]="leadEditDraft.assignedTo">
+              <option value="">Unassigned</option>
+              <option *ngFor="let user of assignmentUsers" [value]="user">{{ user }}</option>
+            </select>
+          </label>
+          <label>
+            Lead Score
+            <input class="form-control" type="number" min="0" max="100" [(ngModel)]="leadEditDraft.leadScore">
+          </label>
+          <label class="wide">
+            Score Reason / Internal Context
+            <textarea class="form-control" rows="3" [(ngModel)]="leadEditDraft.scoreReason"></textarea>
+          </label>
+        </div>
+
+        <div class="edit-panel-actions">
+          <button class="btn-primary" type="button" (click)="saveLeadEdit()">
+            <i class="fas fa-save"></i>
+            Save Changes
+          </button>
+          <button class="btn-outline" type="button" (click)="cancelLeadEdit()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="detail-body" *ngIf="activeLeadTab === 'overview'">
+        <div class="tile-grid">
+          <div class="tile">
+            <p class="tile-label"><i class="fas fa-chart-line"></i> Status</p>
+            <p class="tile-value"><span class="status-badge" [ngClass]="getLeadStatusClass(selectedLead.leadStatus)">{{ selectedLead.leadStatus }}</span></p>
+            <p class="tile-sub">{{ selectedLead.scoreReason || getLeadTemperatureLabel(selectedLead.leadScore) + ' lead requiring review' }}</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label"><i class="fas fa-user"></i> Owner</p>
+            <p class="tile-value">{{ selectedLead.assignedTo || 'Unassigned' }}</p>
+            <p class="tile-sub">{{ getLeadOwnerNote(selectedLead) }}</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label"><i class="fas fa-chart-simple"></i> Engagement</p>
+            <p class="tile-value">{{ selectedLead.contactCount }} calls / {{ selectedLead.emailOpens }} emails</p>
+            <p class="tile-sub">{{ getLeadEngagementNote(selectedLead) }}</p>
+          </div>
+          <div class="tile">
+            <p class="tile-label"><i class="fas fa-arrow-right"></i> Next Step</p>
+            <p class="tile-value">{{ getLeadNextStepTitle(selectedLead) }}</p>
+            <p class="tile-sub">{{ getLeadNextStepNote(selectedLead) }}</p>
+          </div>
+        </div>
+
+        <div class="next-step-bar">
+          <i class="fas fa-calendar-check"></i>
+          <strong>{{ getLeadNextStepTitle(selectedLead) }}</strong>
+          <span class="ns-arrow">-&gt;</span>
+          <strong>{{ getLeadNextStepDate(selectedLead) | date:'mediumDate' }}</strong>
+          <span class="ns-note">{{ getLeadNextStepNote(selectedLead) }}</span>
+        </div>
+
+        <div>
+          <p class="section-label">Contact & Company Details</p>
+          <div class="info-grid">
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-envelope"></i></div>
+              <div>
+                <p class="info-label">Email</p>
+                <p class="info-value">{{ selectedLead.email }}</p>
+              </div>
+            </div>
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-phone"></i></div>
+              <div>
+                <p class="info-label">Phone</p>
+                <p class="info-value">{{ selectedLead.phone || '-' }}</p>
+              </div>
+            </div>
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-building"></i></div>
+              <div>
+                <p class="info-label">Company</p>
+                <p class="info-value">{{ selectedLead.companyName || '-' }}</p>
+              </div>
+            </div>
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-location-dot"></i></div>
+              <div>
+                <p class="info-label">Territory</p>
+                <p class="info-value">{{ selectedLead.territory || '-' }}</p>
+              </div>
+            </div>
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-filter-circle-dollar"></i></div>
+              <div>
+                <p class="info-label">Source</p>
+                <p class="info-value">{{ selectedLead.leadSource || '-' }}</p>
+              </div>
+            </div>
+            <div class="info-cell">
+              <div class="info-icon"><i class="fas fa-calendar"></i></div>
+              <div>
+                <p class="info-label">Lead Created</p>
+                <p class="info-value">{{ selectedLead.createdAt | date:'mediumDate' }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="score-bar-header">
+            <p class="section-label">Lead Score Progress</p>
+            <span [ngClass]="'score-' + getLeadTemperatureClass(selectedLead.leadScore) + '-text'">{{ selectedLead.leadScore }}/100</span>
+          </div>
+          <div class="score-track">
+            <div class="score-fill" [ngClass]="'score-fill-' + getLeadTemperatureClass(selectedLead.leadScore)" [style.width.%]="getLeadScoreWidth(selectedLead.leadScore)"></div>
+          </div>
+          <div class="score-labels">
+            <span>Low</span>
+            <span>Medium</span>
+            <span>High</span>
+          </div>
+        </div>
+
+        <div>
+          <p class="section-label">Engagement Summary</p>
+          <div class="engage-grid">
+            <div class="engage-card">
+              <div class="engage-icon icon-blue"><i class="fas fa-phone"></i></div>
+              <p class="engage-value">{{ selectedLead.contactCount }}</p>
+              <p class="engage-label">Calls Logged</p>
+            </div>
+            <div class="engage-card">
+              <div class="engage-icon icon-green"><i class="fas fa-envelope"></i></div>
+              <p class="engage-value">{{ selectedLead.emailOpens }}</p>
+              <p class="engage-label">Emails Sent</p>
+            </div>
+            <div class="engage-card">
+              <div class="engage-icon icon-purple"><i class="fas fa-comments"></i></div>
+              <p class="engage-value">{{ getLeadMeetingsCount(selectedLead) }}</p>
+              <p class="engage-label">Meetings Held</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-body" *ngIf="activeLeadTab === 'activity'">
+        <p class="section-label">Recent Activity Timeline</p>
+
+        <div class="timeline" *ngIf="selectedLeadActivities.length; else noLeadActivity">
+          <article class="timeline-item" *ngFor="let item of selectedLeadActivities">
+            <div class="tl-icon" [ngClass]="getTimelineClass(item.type)">
+              <i class="fas" [ngClass]="getTimelineIcon(item.type)"></i>
+            </div>
+            <div class="tl-card">
+              <div class="tl-card-top">
+                <p class="tl-subject">{{ item.subject }}</p>
+                <span class="tl-type-badge">{{ item.type }}</span>
+              </div>
+              <p class="tl-desc">{{ item.description }}</p>
+              <div class="tl-time">
+                <i class="fas fa-clock"></i>
+                {{ item.time | date:'MMM d, y, h:mm a' }}
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <ng-template #noLeadActivity>
+          <div class="tl-empty">
+            <div class="tl-empty-icon"><i class="fas fa-comments"></i></div>
+            <p>No activity recorded yet for this lead.</p>
+          </div>
+        </ng-template>
+      </div>
+
+      <div class="detail-body" *ngIf="activeLeadTab === 'notes'">
+        <p class="section-label">Lead Notes</p>
+
+        <div class="note-block">
+          {{ getLeadSummaryNote(selectedLead) }}
+        </div>
+
+        <div class="note-form">
+          <label class="note-label">Add a note</label>
+          <textarea class="note-textarea" rows="4" placeholder="Type your note here..." [(ngModel)]="newLeadNote"></textarea>
+          <button class="btn-primary btn-sm note-save-btn" type="button" (click)="saveLeadNote()">
+            <i class="fas fa-clipboard"></i>
+            Save Note
+          </button>
+        </div>
+
+        <div>
+          <p class="section-label previous-note-label">Previous Notes</p>
+          <div class="prev-note-list">
+            <article class="prev-note" *ngFor="let note of selectedLeadNotes">
+              <div class="prev-note-header">
+                <div class="prev-note-author">
+                  <div class="pn-avatar">{{ note.author.slice(0, 2).toUpperCase() }}</div>
+                  <div>
+                    <p class="pn-name">{{ note.author }}</p>
+                    <p class="pn-date">{{ note.createdAt | date:'MMM d, y, h:mm a' }}</p>
+                  </div>
+                </div>
+                <span class="pn-badge">{{ note.badge }}</span>
+              </div>
+              <p class="pn-body">{{ note.body }}</p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+    </section>
+  </section>
+
+  <section class="section-card table-card" *ngIf="!loading && !selectedLead">
+    <div class="table-scroll">
+      <table class="leads-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Company</th>
+            <th>Phone</th>
+            <th>Territory</th>
+            <th>Lead Source</th>
+            <th>Assigned To</th>
+            <th>Lead Score</th>
+            <th>Status</th>
+            <th>Last Contact</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let lead of leads" class="lead-row" (click)="viewLead(lead.id)">
+            <td>
+              <div class="name-cell">
+                <div class="avatar">{{ getLeadInitials(lead) }}</div>
+                <span class="lead-name-text">{{ lead.firstName }} {{ lead.lastName }}</span>
+              </div>
+            </td>
+            <td class="text-muted">{{ lead.email }}</td>
+            <td>{{ lead.companyName || '-' }}</td>
+            <td class="text-muted">{{ lead.phone || '-' }}</td>
+            <td>{{ lead.territory || '-' }}</td>
+            <td>
+              <span class="tag" [ngClass]="getLeadSourceClass(lead.leadSource)">{{ lead.leadSource || 'Unknown' }}</span>
+            </td>
+            <td>{{ lead.assignedTo || 'Unassigned' }}</td>
+            <td>
+              <div class="score-cell">
+                <span class="score-pill" [ngClass]="getLeadScoreClass(lead.leadScore)">{{ lead.leadScore }}/100</span>
+                <div class="stars">
+                  <i
+                    *ngFor="let i of [1, 2, 3, 4, 5]"
+                    class="fas fa-star"
+                    [class.empty]="i > getLeadScoreStars(lead.leadScore)">
+                  </i>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="status-badge" [ngClass]="getLeadStatusClass(lead.leadStatus)">{{ lead.leadStatus }}</span>
+            </td>
+            <td class="text-muted">{{ getFormattedDate(lead.lastContactDate) }}</td>
+            <td>
+              <div class="action-btns">
+                <button class="action-btn" type="button" title="Log Call" (click)="logCall(lead); $event.stopPropagation()">
+                  <i class="fas fa-phone"></i>
+                </button>
+                <button class="action-btn" type="button" title="Schedule Follow-up" (click)="scheduleFollowUp(lead); $event.stopPropagation()">
+                  <i class="fas fa-calendar-plus"></i>
+                </button>
+                <button class="action-btn" type="button" title="Send Email" (click)="sendEmail(lead); $event.stopPropagation()">
+                  <i class="fas fa-envelope"></i>
+                </button>
+                <button class="action-btn action-delete" type="button" title="Delete" (click)="deleteLead(lead.id); $event.stopPropagation()">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <nav aria-label="Page navigation" class="pagination-wrap">
+      <button class="page-button" type="button" [disabled]="currentPage === 1" (click)="onPageChange(currentPage - 1)">Previous</button>
+      <button
+        class="page-button"
+        type="button"
+        *ngFor="let page of [].constructor(getTotalPages())"
+        [class.active]="page + 1 === currentPage"
+        (click)="onPageChange(page + 1)">
+        {{ page + 1 }}
+      </button>
+      <button class="page-button" type="button" [disabled]="currentPage === getTotalPages()" (click)="onPageChange(currentPage + 1)">Next</button>
+    </nav>
+  </section>
+</div>

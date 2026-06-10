@@ -1,0 +1,210 @@
+<div class="roles-page">
+  <div class="toast" *ngIf="toast" @toast>
+    <span class="toast-check"><lucide-icon [img]="Check"></lucide-icon></span>
+    {{ toast }}
+  </div>
+
+  <header class="page-header">
+    <div class="header-titles">
+      <div class="eyebrow">
+        <lucide-icon [img]="ShieldCheck"></lucide-icon>
+        <span>Access Control Center</span>
+      </div>
+      <h1 class="page-title">Roles &amp; Permissions</h1>
+      <p class="page-subtitle">
+        Design governance policies. Assign granular access to modules and actions across the CORTRACKER platform.
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <div class="header-stats">
+        <div class="stat">
+          <span class="stat-value">{{ stats.active }}</span>
+          <span class="stat-label">Active Roles</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ stats.assigned }}</span>
+          <span class="stat-label">Total Users</span>
+        </div>
+      </div>
+      <button type="button" class="btn btn-primary btn-lg" (click)="openAddForm()">
+        <lucide-icon [img]="Plus"></lucide-icon>
+        Create Role
+      </button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <aside class="roles-col">
+      <div class="col-head">
+        <h2>Available Roles</h2>
+        <span class="col-head-count">{{ roles.length }}</span>
+      </div>
+
+      <div class="roles-list">
+        <button
+          type="button"
+          class="role-card"
+          *ngFor="let role of roles; trackBy: trackById"
+          [class.selected]="role.id === selectedRoleId"
+          (click)="selectRole(role.id)"
+        >
+          <div class="role-card-glow" *ngIf="role.id === selectedRoleId"></div>
+
+          <div class="role-card-top">
+            <div class="role-id-wrap">
+              <div class="role-icon">
+                <lucide-icon [img]="iconFor(role.icon)"></lucide-icon>
+              </div>
+              <div class="role-meta">
+                <h3 class="role-name">{{ role.name }}</h3>
+                <div class="status-row">
+                  <span class="status-dot" [class.active]="role.status === 'Active'"></span>
+                  <span>{{ role.status }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="role-users">
+              <span class="role-users-num">{{ role.users }}</span>
+              <span class="role-users-label">Users</span>
+            </div>
+          </div>
+
+          <div class="access-block">
+            <div class="access-row">
+              <span class="access-label">Access Level</span>
+              <span class="access-pct">{{ pct(role) }}%</span>
+            </div>
+            <div class="progress">
+              <div class="progress-bar" [style.width.%]="pct(role)"></div>
+            </div>
+          </div>
+        </button>
+      </div>
+    </aside>
+
+    <section class="matrix">
+      <div class="matrix-head">
+        <div class="matrix-head-left">
+          <div class="matrix-key-icon"><lucide-icon [img]="Key"></lucide-icon></div>
+          <div>
+            <h2 class="matrix-title">
+              {{ selectedRole.name }} Permissions
+              <button type="button" class="edit-btn" (click)="openEditForm(selectedRole)">
+                <lucide-icon [img]="Pencil"></lucide-icon>
+              </button>
+            </h2>
+            <p class="matrix-desc">{{ selectedRole.description }}</p>
+          </div>
+        </div>
+
+        <div class="legend">
+          <span class="legend-item"><span class="legend-swatch granted"></span> Granted</span>
+          <span class="legend-item"><span class="legend-swatch denied"></span> Denied</span>
+        </div>
+      </div>
+
+      <div class="matrix-body">
+        <div class="matrix-inner" [@moduleStagger]="selectedRoleId">
+          <div class="module-group" *ngFor="let moduleGroup of modules">
+            <div class="module-head">
+              <lucide-icon [img]="Layers"></lucide-icon>
+              <h3 class="module-title">{{ moduleGroup.module }}</h3>
+            </div>
+
+            <div class="screens">
+              <div class="screen-row" *ngFor="let screen of moduleGroup.screens; trackBy: trackByScreen">
+                <div class="screen-left">
+                  <button
+                    type="button"
+                    class="screen-check"
+                    [class.all-on]="isAllOn(selectedRole, screen.id)"
+                    (click)="toggleScreenAll(selectedRole.id, screen.id, !isAllOn(selectedRole, screen.id))"
+                  >
+                    <lucide-icon [img]="Check"></lucide-icon>
+                  </button>
+
+                  <div class="screen-info">
+                    <span class="screen-name">{{ screen.label }}</span>
+                    <span class="screen-count">{{ activeCount(selectedRole, screen.id) }} / 4 Permissions</span>
+                  </div>
+                </div>
+
+                <div class="segmented">
+                  <button
+                    type="button"
+                    class="seg-btn"
+                    *ngFor="let action of actions; trackBy: trackByAction"
+                    [class.on]="permFor(selectedRole, screen.id)[action]"
+                    (click)="toggleCell(selectedRole.id, screen.id, action)"
+                  >
+                    {{ abbr[action] }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="matrix-foot">
+        <lucide-icon [img]="Info"></lucide-icon>
+        Click individual letters (C, V, E, D) to toggle. Use the left checkbox to toggle all permissions for a screen.
+      </div>
+    </section>
+  </div>
+
+  <div class="modal-overlay" *ngIf="formOpen" (click)="closeForm()">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-head">
+        <h2 class="modal-title">
+          <lucide-icon [img]="isEditing ? Pencil : Plus"></lucide-icon>
+          {{ isEditing ? 'Edit Role' : 'Create New Role' }}
+        </h2>
+        <p class="modal-desc">
+          {{ isEditing
+            ? 'Update identity and status. Permissions are managed in the matrix.'
+            : 'Establish a new access level. It starts with zero permissions.' }}
+        </p>
+      </div>
+
+      <div class="modal-body">
+        <div class="field">
+          <label class="field-label">Role Name</label>
+          <input class="input" type="text" placeholder="e.g. Compliance Officer" [(ngModel)]="form.name">
+        </div>
+
+        <div class="field">
+          <label class="field-label">Description</label>
+          <textarea class="textarea" rows="2" placeholder="What responsibilities does this role carry?" [(ngModel)]="form.description"></textarea>
+        </div>
+
+        <div class="grid2">
+          <div class="field">
+            <label class="field-label">Status</label>
+            <select class="select" [(ngModel)]="form.status">
+              <option value="Active">Active</option>
+              <option value="Draft">Draft</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label class="field-label">Icon</label>
+            <select class="select" [(ngModel)]="form.icon">
+              <option *ngFor="let iconKey of iconKeys" [value]="iconKey">{{ iconKey }}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-foot">
+        <button type="button" class="btn btn-ghost" (click)="closeForm()">Cancel</button>
+        <button type="button" class="btn btn-primary" (click)="saveForm()">
+          <lucide-icon [img]="isEditing ? Save : Plus"></lucide-icon>
+          {{ isEditing ? 'Save Changes' : 'Create Role' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

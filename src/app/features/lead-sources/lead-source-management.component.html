@@ -1,0 +1,68 @@
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Lead acquisition</p>
+      <h1>Lead Sources</h1>
+      <p>Manage website, Facebook, marketplace, referral, and campaign source mapping.</p>
+    </div>
+    <div class="header-actions">
+      <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn btn-danger" type="button" (click)="openForm()">Add Source</button>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div><span>Active sources</span><strong>{{ activeSources }}</strong></div>
+    <div><span>Total leads</span><strong>{{ totalLeads }}</strong></div>
+    <div><span>Avg conversion</span><strong>{{ averageConversion }}%</strong></div>
+  </div>
+
+  <div class="admin-layout">
+    <section class="list-panel">
+      <h2>Source List</h2>
+      <button class="list-row" type="button" *ngFor="let source of sources" [class.active]="selectedSource?.id === source.id" (click)="selectSource(source)">
+        <span><strong>{{ source.name }}</strong><small>{{ source.type }} | {{ source.mappedCampaign }}</small></span>
+        <em [class.paused]="source.status === 'Paused'">{{ source.status }}</em>
+      </button>
+    </section>
+
+    <section class="detail-panel" *ngIf="selectedSource">
+      <div class="detail-hero">
+        <div>
+          <p class="eyebrow">{{ selectedSource.integrationStatus }}</p>
+          <h2>{{ selectedSource.name }}</h2>
+          <p>{{ selectedSource.type }} | Owner: {{ selectedSource.owner }}</p>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="openForm(selectedSource)">Edit</button>
+          <button class="btn btn-danger" type="button" (click)="toggleSource(selectedSource)">{{ selectedSource.status === 'Active' ? 'Pause' : 'Activate' }}</button>
+        </div>
+      </div>
+
+      <div class="detail-grid">
+        <div><span>Leads</span><strong>{{ selectedSource.leads }}</strong></div>
+        <div><span>Conversion</span><strong>{{ selectedSource.conversionRate }}%</strong></div>
+        <div><span>Campaign</span><strong>{{ selectedSource.mappedCampaign }}</strong></div>
+      </div>
+
+      <div class="integration-card">
+        <h3>Integration Setup</h3>
+        <p>{{ selectedSource.type }} source is {{ selectedSource.integrationStatus | lowercase }}.</p>
+        <button class="btn btn-outline-secondary" type="button" (click)="connect(selectedSource)">Connect / Reconnect</button>
+      </div>
+    </section>
+
+    <aside class="form-panel" *ngIf="showForm">
+      <h2>{{ form.id ? 'Edit Source' : 'Add Source' }}</h2>
+      <label>Name</label><input class="form-control" [(ngModel)]="form.name">
+      <label>Type</label>
+      <select class="form-control" [(ngModel)]="form.type"><option *ngFor="let type of sourceTypes" [value]="type">{{ type }}</option></select>
+      <label>Owner</label><input class="form-control" [(ngModel)]="form.owner">
+      <label>Mapped campaign</label><input class="form-control" [(ngModel)]="form.mappedCampaign">
+      <div class="form-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="showForm = false">Cancel</button>
+        <button class="btn btn-danger" type="button" (click)="saveSource()">Save</button>
+      </div>
+    </aside>
+  </div>
+</div>

@@ -1,0 +1,54 @@
+<div class="admin-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Menu master</p>
+      <h1>Menu Access</h1>
+      <p>Control dynamic sidebar menus, role visibility, tenant-specific modules, and menu order.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="admin-layout">
+    <section class="list-panel">
+      <h2>Menu List</h2>
+      <button class="list-row" type="button" *ngFor="let menu of menuItems" [class.active]="selectedMenu?.id === menu.id" (click)="selectMenu(menu)">
+        <i [class]="'fas ' + menu.icon"></i>
+        <span><strong>{{ menu.label }}</strong><small>{{ menu.route }} | {{ menu.section }}</small></span>
+        <em [class.off]="!menu.enabled">{{ menu.enabled ? 'On' : 'Off' }}</em>
+      </button>
+    </section>
+
+    <section class="detail-panel" *ngIf="selectedMenu">
+      <div class="detail-hero">
+        <div>
+          <p class="eyebrow">{{ selectedMenu.section }}</p>
+          <h2>{{ selectedMenu.label }}</h2>
+          <p>{{ selectedMenu.route }} | Order {{ selectedMenu.order }}</p>
+        </div>
+        <button class="btn btn-danger" type="button" (click)="toggleMenu(selectedMenu)">{{ selectedMenu.enabled ? 'Disable' : 'Enable' }}</button>
+      </div>
+
+      <div class="detail-grid">
+        <div><span>Icon</span><strong><i [class]="'fas ' + selectedMenu.icon"></i> {{ selectedMenu.icon }}</strong></div>
+        <div><span>Tenant specific</span><strong>{{ selectedMenu.tenantSpecific ? 'Yes' : 'No' }}</strong></div>
+        <div><span>Visible roles</span><strong>{{ selectedMenu.roles.length }}</strong></div>
+      </div>
+
+      <div class="mapping-card">
+        <h3>Role Menu Mapping</h3>
+        <button class="role-pill" type="button" *ngFor="let role of roles" [class.active]="selectedMenu.roles.includes(role)" (click)="toggleRole(selectedMenu, role)">
+          <i class="fas" [ngClass]="selectedMenu.roles.includes(role) ? 'fa-check-circle' : 'fa-circle'"></i>
+          {{ role }}
+        </button>
+      </div>
+
+      <div class="mapping-card">
+        <h3>Menu Order</h3>
+        <div class="order-actions">
+          <button class="btn btn-outline-secondary" type="button" (click)="move(selectedMenu, -1)">Move Up</button>
+          <button class="btn btn-outline-secondary" type="button" (click)="move(selectedMenu, 1)">Move Down</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>

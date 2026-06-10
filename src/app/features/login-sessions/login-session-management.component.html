@@ -1,0 +1,266 @@
+<div class="ls-page">
+  <div class="ls-header">
+    <div>
+      <p class="ls-breadcrumb">Login and session operations</p>
+      <h1 class="ls-title">Login Sessions</h1>
+      <p class="ls-subtitle">Track active users, devices, failed logins, trusted sessions, and force logout actions.</p>
+    </div>
+    <div class="ls-header-actions">
+      <span class="ls-toast" *ngIf="activityMessage">{{ activityMessage }}</span>
+      <button class="btn-danger" type="button" (click)="revokeAllSessions()">
+        <i class="fas fa-shield-halved"></i>
+        Revoke All Sessions
+      </button>
+    </div>
+  </div>
+
+  <div class="ls-stat-grid">
+    <div class="ls-stat-card">
+      <div class="ls-stat-icon icon-green"><i class="fas fa-users"></i></div>
+      <div>
+        <p class="ls-stat-label">Active Sessions</p>
+        <p class="ls-stat-value">{{ activeCount }}</p>
+      </div>
+    </div>
+    <div class="ls-stat-card">
+      <div class="ls-stat-icon icon-amber"><i class="fas fa-clock"></i></div>
+      <div>
+        <p class="ls-stat-label">Idle Sessions</p>
+        <p class="ls-stat-value">{{ idleCount }}</p>
+      </div>
+    </div>
+    <div class="ls-stat-card">
+      <div class="ls-stat-icon icon-orange"><i class="fas fa-triangle-exclamation"></i></div>
+      <div>
+        <p class="ls-stat-label">Untrusted Devices</p>
+        <p class="ls-stat-value">{{ untrustedCount }}</p>
+      </div>
+    </div>
+    <div class="ls-stat-card">
+      <div class="ls-stat-icon icon-red"><i class="fas fa-ban"></i></div>
+      <div>
+        <p class="ls-stat-label">Flagged / Blocked</p>
+        <p class="ls-stat-value">{{ blockedCount }}</p>
+      </div>
+    </div>
+    <div class="ls-stat-card">
+      <div class="ls-stat-icon icon-brand"><i class="fas fa-lock"></i></div>
+      <div>
+        <p class="ls-stat-label">Failed Login Cap</p>
+        <p class="ls-stat-value">{{ maxFailedAttempts }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="ls-main-grid">
+    <section class="ls-card ls-device-list">
+      <div class="ls-card-header">
+        <h2 class="ls-card-title">Active Devices</h2>
+        <div class="ls-search-box">
+          <i class="fas fa-search ls-search-icon"></i>
+          <input class="ls-search-input" type="text" [(ngModel)]="deviceSearchTerm" placeholder="Search devices">
+        </div>
+      </div>
+
+      <div class="ls-device-scroll">
+        <article
+          class="ls-device-item"
+          *ngFor="let session of filteredSessions"
+          [class.ls-device-selected]="selectedSessionId === session.id"
+          [class.ls-device-risk]="!session.trusted || session.status === 'Blocked'"
+          (click)="selectedSessionId = session.id">
+          <div class="ls-device-avatar" [class.avatar-flagged]="!session.trusted || session.status === 'Blocked'">
+            {{ getInitials(session.user) }}
+          </div>
+          <div class="ls-device-info">
+            <div class="ls-device-top">
+              <span class="ls-device-name">{{ session.user }}</span>
+              <span class="ls-status-pill" [ngClass]="getStatusClass(session.status)">{{ session.status }}</span>
+            </div>
+            <p class="ls-device-sub">{{ session.role }} | {{ session.company }}</p>
+            <p class="ls-device-sub">
+              <i class="fas" [ngClass]="getDeviceIcon(session.device)"></i>
+              {{ session.device }} | {{ session.location }}
+            </p>
+          </div>
+        </article>
+
+        <div class="ls-empty" *ngIf="!filteredSessions.length">No devices match your search.</div>
+      </div>
+    </section>
+
+    <section class="ls-card ls-device-detail">
+      <div class="ls-detail-header">
+        <div class="ls-detail-identity">
+          <div class="ls-detail-avatar">{{ getInitials(selectedSession.user) }}</div>
+          <div>
+            <p class="ls-detail-role">{{ selectedSession.role }}</p>
+            <h2 class="ls-detail-name">{{ selectedSession.user }}</h2>
+            <p class="ls-detail-sub">{{ selectedSession.company }} | {{ selectedSession.browser }}</p>
+          </div>
+        </div>
+        <div class="ls-detail-badges">
+          <span class="ls-status-pill" [ngClass]="getStatusClass(selectedSession.status)">{{ selectedSession.status }}</span>
+          <span class="ls-meta-badge badge-amber" *ngIf="!selectedSession.mfaVerified">
+            <i class="fas fa-key"></i>
+            No MFA
+          </span>
+          <span class="ls-meta-badge badge-orange" *ngIf="!selectedSession.trusted">
+            <i class="fas fa-circle-exclamation"></i>
+            Untrusted Device
+          </span>
+        </div>
+      </div>
+
+      <div class="ls-info-grid">
+        <div class="ls-info-cell">
+          <p class="ls-info-label">Device</p>
+          <p class="ls-info-value"><i class="fas" [ngClass]="getDeviceIcon(selectedSession.device)"></i>{{ selectedSession.device }}</p>
+        </div>
+        <div class="ls-info-cell">
+          <p class="ls-info-label">IP Address</p>
+          <p class="ls-info-value ls-mono"><i class="fas fa-globe"></i>{{ selectedSession.ip }}</p>
+        </div>
+        <div class="ls-info-cell">
+          <p class="ls-info-label">Location</p>
+          <p class="ls-info-value"><i class="fas fa-location-dot"></i>{{ selectedSession.location }}</p>
+        </div>
+        <div class="ls-info-cell">
+          <p class="ls-info-label">Last Active</p>
+          <p class="ls-info-value"><i class="fas fa-clock"></i>{{ selectedSession.lastActive }}</p>
+        </div>
+      </div>
+
+      <div class="ls-meta-strip">
+        <div class="ls-meta-cell">
+          <p class="ls-info-label">Browser</p>
+          <p class="ls-meta-value">{{ selectedSession.browser }}</p>
+        </div>
+        <div class="ls-meta-cell">
+          <p class="ls-info-label">Session ID</p>
+          <p class="ls-meta-value ls-mono">{{ selectedSession.id | uppercase }}</p>
+        </div>
+        <div class="ls-meta-cell">
+          <p class="ls-info-label">Company</p>
+          <p class="ls-meta-value">{{ selectedSession.company }}</p>
+        </div>
+      </div>
+
+      <div class="ls-detail-actions">
+        <button class="btn-danger btn-sm" type="button" (click)="forceLogout(selectedSession)">
+          <i class="fas fa-right-from-bracket"></i>
+          Force Logout
+        </button>
+        <button class="btn-outline btn-sm" type="button" (click)="trustDevice(selectedSession)">
+          <i class="fas fa-shield-halved"></i>
+          Trust Device
+        </button>
+        <button class="btn-outline-danger btn-sm" type="button" (click)="blockSession(selectedSession)">
+          <i class="fas fa-ban"></i>
+          Block IP
+        </button>
+        <button class="btn-ghost btn-sm ls-ml-auto" type="button" (click)="viewFullLog(selectedSession)">
+          <i class="fas fa-eye"></i>
+          View Full Log
+        </button>
+      </div>
+    </section>
+
+    <section class="ls-card ls-policy-panel">
+      <div>
+        <h2 class="ls-card-title">Session Policy</h2>
+        <p class="ls-policy-sub">Controls for all users in this workspace</p>
+      </div>
+
+      <div class="ls-policy-fields">
+        <label class="ls-field">
+          <span class="ls-label">Idle Timeout (minutes)</span>
+          <input class="ls-input" type="number" [(ngModel)]="sessionTimeout" min="5">
+        </label>
+        <label class="ls-field">
+          <span class="ls-label">Max Failed Login Attempts</span>
+          <input class="ls-input" type="number" [(ngModel)]="maxFailedAttempts" min="1">
+        </label>
+        <label class="ls-field">
+          <span class="ls-label">Max Session Duration (hours)</span>
+          <input class="ls-input" type="number" [(ngModel)]="maxSessionDurationHours" min="1">
+        </label>
+      </div>
+
+      <div class="ls-toggle-group">
+        <label class="ls-toggle-row">
+          <span>
+            <strong>Remember Trusted Devices</strong>
+            <small>Skip MFA for approved devices inside policy limits.</small>
+          </span>
+          <input class="ls-toggle" type="checkbox" [(ngModel)]="rememberTrustedDevices">
+        </label>
+        <label class="ls-toggle-row">
+          <span>
+            <strong>Require MFA on Login</strong>
+            <small>Force users to verify identity during login.</small>
+          </span>
+          <input class="ls-toggle" type="checkbox" [(ngModel)]="requireMfa">
+        </label>
+      </div>
+
+      <button class="btn-primary btn-full" type="button" (click)="savePolicy()">Save Policy</button>
+
+      <div class="ls-policy-summary">
+        <p class="ls-summary-title">Policy Summary</p>
+        <div class="ls-summary-row"><span>Idle timeout</span><strong>{{ sessionTimeout }} min</strong></div>
+        <div class="ls-summary-row"><span>Session cap</span><strong>{{ maxSessionDurationHours }} hrs</strong></div>
+        <div class="ls-summary-row"><span>Failed attempts</span><strong>{{ maxFailedAttempts }}</strong></div>
+        <div class="ls-summary-row"><span>MFA required</span><strong>{{ requireMfa ? 'Yes' : 'No' }}</strong></div>
+      </div>
+    </section>
+  </div>
+
+  <section class="ls-card ls-history">
+    <div class="ls-history-header">
+      <div>
+        <h2 class="ls-card-title">Login History</h2>
+        <p class="ls-policy-sub">Recent authentication events across all users</p>
+      </div>
+      <div class="ls-search-box">
+        <i class="fas fa-search ls-search-icon"></i>
+        <input class="ls-search-input" type="text" [(ngModel)]="historySearchTerm" placeholder="Filter history">
+      </div>
+    </div>
+
+    <div class="ls-table-wrap">
+      <table class="ls-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Description</th>
+            <th>Device</th>
+            <th>IP Address</th>
+            <th>Result</th>
+            <th>Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let event of filteredLoginEvents" [class.ls-row-blocked]="event.result !== 'Success'">
+            <td>
+              <div class="ls-user-cell">
+                <div class="ls-avatar-sm" [class.av-flagged]="event.result !== 'Success'">{{ getInitials(event.user) }}</div>
+                <strong>{{ event.user }}</strong>
+              </div>
+            </td>
+            <td class="ls-muted">{{ event.event }}</td>
+            <td class="ls-muted">
+              <i class="fas" [ngClass]="getDeviceIcon(event.device)"></i>
+              {{ event.device }}
+            </td>
+            <td class="ls-mono ls-muted">{{ event.ip }}</td>
+            <td><span class="ls-result" [ngClass]="getResultClass(event.result)">{{ event.result }}</span></td>
+            <td class="ls-muted">{{ event.time }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="ls-empty" *ngIf="!filteredLoginEvents.length">No login history matches your filter.</div>
+  </section>
+</div>

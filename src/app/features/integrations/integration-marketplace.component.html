@@ -1,0 +1,51 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Integration marketplace</p>
+      <h1>Integrations</h1>
+      <p>Connect OAuth apps and monitor sync health across email, meetings, messaging, calling, and billing.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="market-layout">
+    <section class="panel app-grid">
+      <article class="app-card" *ngFor="let app of integrations" [class.active]="selectedId === app.id" (click)="selectedId = app.id">
+        <i class="fas" [ngClass]="app.icon"></i>
+        <div>
+          <strong>{{ app.name }}</strong>
+          <span>{{ app.category }} | {{ app.usedIn }}</span>
+        </div>
+        <b [class.warning]="app.status === 'Needs OAuth' || app.status === 'Sync Issue'">{{ app.status }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel">
+      <p class="eyebrow">{{ selectedIntegration.category }}</p>
+      <h2>{{ selectedIntegration.name }}</h2>
+      <p>{{ selectedIntegration.usedIn }}</p>
+      <div class="detail-grid">
+        <div><span>Status</span><strong>{{ selectedIntegration.status }}</strong></div>
+        <div><span>Last sync</span><strong>{{ selectedIntegration.lastSync }}</strong></div>
+      </div>
+      <div class="scope-list">
+        <span *ngFor="let scope of selectedIntegration.scopes">{{ scope }}</span>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="connect(selectedIntegration)">Connect OAuth</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="testSync(selectedIntegration)">Test Sync</button>
+        <button class="btn btn-outline-danger" type="button" (click)="disconnect(selectedIntegration)">Disconnect</button>
+      </div>
+    </section>
+  </div>
+
+  <section class="panel logs-panel">
+    <h2>Integration Logs</h2>
+    <article class="log-row" *ngFor="let log of syncLogs">
+      <strong>{{ log.app }}</strong>
+      <span>{{ log.event }}</span>
+      <b>{{ log.result }}</b>
+      <small>{{ log.time }}</small>
+    </article>
+  </section>
+</div>

@@ -1,0 +1,369 @@
+<div class="deal-products-page reference-products-page container-fluid py-4">
+  <div *ngIf="message" class="alert toast-alert" [class]="'alert alert-' + message.type" role="alert">
+    <i class="fas fa-circle-info me-2"></i>{{ message.text }}
+  </div>
+
+  <div *ngIf="loading" class="text-center py-5">
+    <div class="spinner-border" role="status">
+      <span class="visually-hidden">Loading deal products</span>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!loading && deal">
+    <section class="workspace-header reference-product-header">
+      <div class="product-title-row">
+        <button class="link-button" type="button" (click)="goToDealProfile()">
+          <i class="fas fa-arrow-left"></i>
+          Back to Deal
+        </button>
+        <span class="deal-avatar">{{ companyInitials }}</span>
+        <h1>{{ deal.name }}</h1>
+        <span class="stage-pill" [ngClass]="getStageClass(deal.stage)">{{ deal.stage }}</span>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="goToNegotiation()">
+          <i class="fas fa-handshake"></i>
+          Go to Negotiation
+        </button>
+        <button class="btn btn-outline-secondary" type="button" (click)="advanceStage()">
+          <i class="fas fa-milestone"></i>
+          Advance Stage
+        </button>
+      </div>
+    </section>
+
+    <section class="connected-flow">
+      <button type="button" (click)="goToDealProfile()">
+        <i class="fas fa-building"></i>
+        Company Account
+      </button>
+      <i class="fas fa-chevron-right"></i>
+      <span>
+        <i class="fas fa-box"></i>
+        Products & Quote
+      </span>
+      <i class="fas fa-chevron-right"></i>
+      <button type="button" (click)="goToNegotiation()">
+        <i class="fas fa-handshake"></i>
+        Negotiation
+      </button>
+    </section>
+
+    <section class="inline-schedule-panel" *ngIf="showSchedulePanel">
+      <div class="schedule-panel-header">
+        <div>
+          <strong>Schedule product/quote discussion</strong>
+          <span>{{ deal.name }} | {{ deal.lineItems?.length || 0 }} products | {{ dealTotal | currency }}</span>
+        </div>
+        <button class="icon-button" type="button" title="Close scheduler" (click)="showSchedulePanel = false">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+
+      <div class="inline-meeting-warning" *ngIf="getDealMeetings().length">
+        <div class="warning-head">
+          <i class="fas fa-triangle-exclamation"></i>
+          <span>{{ getDealMeetings().length }} upcoming quote meeting already scheduled.</span>
+          <button type="button" (click)="showUpcomingMeetings = !showUpcomingMeetings">{{ showUpcomingMeetings ? 'Hide' : 'View' }}</button>
+        </div>
+        <div class="warning-meeting-row" *ngFor="let meeting of getDealMeetings()" [hidden]="!showUpcomingMeetings">
+          <strong>{{ meeting.title }}</strong>
+          <span>{{ meeting.date }} at {{ meeting.time }} | {{ meeting.provider }} | Owner: {{ meeting.owner }}</span>
+        </div>
+      </div>
+
+      <div class="meeting-provider-grid">
+        <button
+          type="button"
+          *ngFor="let provider of meetingProviders"
+          class="meeting-provider"
+          [class.active]="meetingProvider === provider.name"
+          [class.disabled]="!provider.connected"
+          [disabled]="!provider.connected"
+          (click)="selectMeetingProvider(provider.name)">
+          <i class="fas" [ngClass]="provider.icon"></i>
+          <span>{{ provider.name }}</span>
+          <small>{{ provider.connected ? 'Connected' : 'Not connected' }}</small>
+        </button>
+      </div>
+
+      <div class="schedule-form-grid">
+        <select class="form-control" [(ngModel)]="meetingPurpose">
+          <option *ngFor="let purpose of meetingPurposes" [value]="purpose">{{ purpose }}</option>
+        </select>
+        <select class="form-control" [(ngModel)]="meetingReminder">
+          <option>15 minutes before</option>
+          <option>30 minutes before</option>
+          <option>1 hour before</option>
+          <option>1 day before</option>
+        </select>
+        <input class="form-control" type="date" [(ngModel)]="meetingDate">
+        <input class="form-control" type="time" [(ngModel)]="meetingTime">
+      </div>
+      <textarea class="form-control" rows="2" [(ngModel)]="meetingNotes" placeholder="Agenda or internal note"></textarea>
+      <div class="schedule-actions">
+        <button class="btn btn-outline-secondary" type="button" (click)="showSchedulePanel = false">Cancel</button>
+        <button class="btn btn-danger" type="button" (click)="saveMeeting()">Schedule Meeting</button>
+      </div>
+    </section>
+
+    <section class="summary-grid mb-4 reference-hidden-summary">
+      <div class="metric-tile">
+        <span>Total value</span>
+        <strong>{{ dealTotal | currency }}</strong>
+        <small>{{ deal.lineItems?.length || 0 }} products attached</small>
+      </div>
+      <div class="metric-tile">
+        <span>Discounts</span>
+        <strong>{{ discountTotal | currency }}</strong>
+        <small>{{ taxTotal | currency }} tax calculated</small>
+      </div>
+      <div class="metric-tile">
+        <span>Revenue split</span>
+        <strong [class.text-danger]="!isSplitBalanced">{{ splitTotal }}%</strong>
+        <small>{{ isSplitBalanced ? 'Balanced across owners' : 'Needs adjustment to 100%' }}</small>
+      </div>
+      <div class="metric-tile">
+        <span>Credit risk</span>
+        <strong>{{ approvalRisk }}</strong>
+        <small>{{ getCreditUsageLabel() }}</small>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <div class="workspace-main">
+        <section class="workspace-panel">
+          <div class="panel-header">
+            <div>
+              <h2>Products & Line Items</h2>
+              <p>{{ deal.lineItems?.length || 0 }} items | {{ dealTotal | currency:'USD':'symbol':'1.0-0' }} total</p>
+            </div>
+            <button class="btn btn-primary" type="button" (click)="addLineItem()">
+              <i class="fas fa-plus"></i>
+              Add Product
+            </button>
+          </div>
+
+          <form *ngIf="showLineItemForm" class="inline-editor mb-3" (ngSubmit)="saveLineItem()">
+            <div class="form-grid">
+              <div class="span-2">
+                <label class="form-label">Product name</label>
+                <input class="form-control" name="productName" [(ngModel)]="lineItemForm.productName" placeholder="CRM Enterprise License">
+              </div>
+              <div>
+                <label class="form-label">Category</label>
+                <select class="form-control" name="productCategory" [(ngModel)]="lineItemForm.productCategory">
+                  <option *ngFor="let category of productCategories" [value]="category">{{ category }}</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Qty</label>
+                <input class="form-control" type="number" min="1" name="quantity" [(ngModel)]="lineItemForm.quantity" (input)="updateLineItemTotal()">
+              </div>
+              <div>
+                <label class="form-label">Unit price</label>
+                <input class="form-control" type="number" min="0" name="unitPrice" [(ngModel)]="lineItemForm.unitPrice" (input)="updateLineItemTotal()">
+              </div>
+              <div>
+                <label class="form-label">Discount %</label>
+                <input class="form-control" type="number" min="0" max="100" name="discount" [(ngModel)]="lineItemForm.discount" (input)="updateLineItemTotal()">
+              </div>
+              <div>
+                <label class="form-label">Tax %</label>
+                <input class="form-control" type="number" min="0" name="tax" [(ngModel)]="lineItemForm.tax" (input)="updateLineItemTotal()">
+              </div>
+              <div>
+                <label class="form-label">Currency</label>
+                <select class="form-control" name="currency" [(ngModel)]="lineItemForm.currency">
+                  <option *ngFor="let currency of currencies" [value]="currency">{{ currency }}</option>
+                </select>
+              </div>
+              <div class="span-full">
+                <label class="form-label">Description</label>
+                <textarea class="form-control" rows="2" name="description" [(ngModel)]="lineItemForm.description" placeholder="Scope, billing note, or delivery detail"></textarea>
+              </div>
+            </div>
+            <div class="editor-actions">
+              <span>Line total: <strong>{{ lineItemForm.total | currency }}</strong></span>
+              <div>
+                <button class="btn btn-outline-secondary me-2" type="button" (click)="showLineItemForm = false">Cancel</button>
+                <button class="btn btn-primary" type="submit">Save Product</button>
+              </div>
+            </div>
+          </form>
+
+          <div *ngIf="deal.lineItems?.length; else noProducts" class="product-table">
+            <div class="product-table-head">
+              <span>Product</span>
+              <span>Category</span>
+              <span>Qty</span>
+              <span>Unit Price</span>
+              <span>Discount</span>
+              <span>Total</span>
+              <span></span>
+            </div>
+            <article class="product-row" *ngFor="let item of deal.lineItems">
+              <div>
+                <strong>{{ item.productName }}</strong>
+                <small>{{ item.description || 'No description added' }}</small>
+              </div>
+              <span class="category-chip">{{ item.productCategory || 'Software' }}</span>
+              <span>{{ item.quantity }}</span>
+              <span>{{ item.unitPrice | currency:(item.currency || deal.currency || 'USD'):'symbol':'1.0-0' }}</span>
+              <span>{{ item.discount || 0 }}%</span>
+              <strong>{{ item.total | currency:(item.currency || deal.currency || 'USD'):'symbol':'1.0-0' }}</strong>
+              <button class="icon-button danger" type="button" title="Remove product" (click)="removeLineItem(item.id)">
+                <i class="fas fa-trash"></i>
+              </button>
+            </article>
+          </div>
+
+          <ng-template #noProducts>
+            <div class="empty-state">
+              <i class="fas fa-box-open"></i>
+              <h3>No products yet</h3>
+              <p>Add products to calculate quote and invoice totals.</p>
+              <button class="btn btn-primary" type="button" (click)="addLineItem()">Add first product</button>
+            </div>
+          </ng-template>
+        </section>
+
+        <section class="workspace-panel mt-4">
+          <div class="panel-header">
+            <div>
+              <h2>Revenue Split</h2>
+              <p>Distribute credit and commission ownership across the sales team.</p>
+            </div>
+            <button class="btn btn-outline-primary" type="button" (click)="addRevenueSplit()">
+              <i class="fas fa-user-plus"></i>
+              Add Revenue Split
+            </button>
+          </div>
+
+          <form *ngIf="showRevenueSplitForm" class="inline-editor mb-3" (ngSubmit)="saveRevenueSplit()">
+            <div class="split-form-grid">
+              <input class="form-control" name="firstName" [(ngModel)]="revenueSplitForm.firstName" placeholder="First name">
+              <input class="form-control" name="lastName" [(ngModel)]="revenueSplitForm.lastName" placeholder="Last name">
+              <input class="form-control" type="number" min="0" max="100" name="splitPercentage" [(ngModel)]="revenueSplitForm.splitPercentage" placeholder="Split %">
+              <input class="form-control" type="number" min="0" name="commissionRate" [(ngModel)]="revenueSplitForm.commissionRate" placeholder="Commission %">
+            </div>
+            <div class="editor-actions">
+              <button class="btn btn-outline-secondary" type="button" (click)="showRevenueSplitForm = false">Cancel</button>
+              <button class="btn btn-primary" type="submit">Save Split</button>
+            </div>
+          </form>
+
+          <div class="split-list">
+            <div class="split-row" *ngFor="let split of deal.revenueSplits">
+              <div class="avatar">{{ split.user?.firstName?.charAt(0) }}{{ split.user?.lastName?.charAt(0) }}</div>
+              <div>
+                <strong>{{ split.user?.firstName }} {{ split.user?.lastName }}</strong>
+                <span>{{ split.commission | currency }} commission</span>
+              </div>
+              <div class="split-bar"><span [style.width.%]="split.splitPercentage"></span></div>
+              <div class="split-percent">{{ split.splitPercentage }}%</div>
+              <button class="icon-button danger" type="button" title="Remove split" (click)="removeRevenueSplit(split.id)">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="split-health" [class.warning]="!isSplitBalanced">
+            <span>Total split</span>
+            <strong>{{ splitTotal }}%</strong>
+          </div>
+        </section>
+      </div>
+
+      <aside class="workspace-sidebar">
+        <section class="workspace-panel">
+          <div class="panel-header compact">
+            <div>
+              <h2>Quote Summary</h2>
+              <p>Commercial documents generated from line items.</p>
+            </div>
+          </div>
+
+          <div class="quote-summary">
+            <div><span>Subtotal</span><strong>{{ quoteSubtotal | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+            <div><span>Discount</span><strong class="text-warning">-{{ discountTotal | currency }}</strong></div>
+            <div class="total"><span>Total</span><strong>{{ dealTotal | currency }}</strong></div>
+          </div>
+
+          <div class="quote-status-line">
+            <span>Quote Status</span>
+            <strong>{{ quote?.quoteNumber || 'No quote created' }}</strong>
+          </div>
+
+          <div class="sidebar-actions">
+            <button class="btn btn-danger w-100" type="button" (click)="createQuote()" [disabled]="!deal.lineItems?.length">
+              <i class="fas fa-file-signature"></i>
+              Create & Send Quote
+            </button>
+            <button class="btn btn-outline-secondary w-100" type="button" (click)="requestApproval()">
+              <i class="fas fa-shield"></i>
+              Request Approval
+            </button>
+            <button class="btn btn-success w-100" type="button" (click)="createInvoice()" [disabled]="!quote || !!invoice">
+              <i class="fas fa-file-invoice-dollar"></i>
+              Create Invoice
+            </button>
+          </div>
+        </section>
+
+        <section class="workspace-panel mt-4">
+          <div class="panel-header compact">
+            <div>
+              <h2>Deal Details</h2>
+              <p>Current deal context for quote readiness.</p>
+            </div>
+          </div>
+
+          <div class="deal-detail-list">
+            <div><span>Deal Value</span><strong>{{ deal.amount | currency:'USD':'symbol':'1.0-0' }}</strong></div>
+            <div><span>Stage</span><strong>{{ deal.stage }}</strong></div>
+            <div><span>Probability</span><strong>{{ deal.probability }}%</strong></div>
+            <div><span>Close Date</span><strong>{{ closeDateLabel }}</strong></div>
+            <div><span>Rep</span><strong>{{ ownerName }}</strong></div>
+          </div>
+
+          <button class="btn btn-outline-secondary w-100 mt-3" type="button" (click)="goToNegotiation()">
+            <i class="fas fa-handshake"></i>
+            Go to Negotiation
+          </button>
+          <button class="btn btn-outline-success w-100 mt-2" type="button" (click)="markWon()">
+            <i class="fas fa-check"></i>
+            Mark Won
+          </button>
+          <button class="btn btn-outline-danger w-100 mt-2" type="button" (click)="markLost()">
+            <i class="fas fa-times"></i>
+            Mark Lost
+          </button>
+        </section>
+      </aside>
+    </div>
+
+    <section class="workspace-panel mt-4 reference-hidden-workflow">
+      <div class="panel-header">
+        <div>
+          <h2>Deal Automation Workflow</h2>
+          <p>Track the product-to-cash flow from discovery through closure.</p>
+        </div>
+        <button class="btn btn-outline-primary" type="button" (click)="advanceStage()">Advance Stage</button>
+      </div>
+
+      <div class="stage-track">
+        <div class="stage-progress" [style.width.%]="getWorkflowProgress()"></div>
+        <div class="stage-step" *ngFor="let stage of workflowStages" [class]="getStageState(stage)">
+          <span><i class="fas fa-check"></i></span>
+          <strong>{{ stage }}</strong>
+        </div>
+      </div>
+
+      <div class="workflow-note">
+        <i class="fas fa-bolt"></i>
+        <span>{{ deal.stage }} is active. Quote, approval, invoice, and payment steps stay visible so the team can move the deal without hunting across screens.</span>
+      </div>
+    </section>
+  </ng-container>
+</div>

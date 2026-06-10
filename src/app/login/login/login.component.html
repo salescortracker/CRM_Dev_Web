@@ -1,0 +1,98 @@
+<div class="login-page">
+  <section class="login-left">
+    <div>
+      <h1>Welcome to Cortracker CRM</h1>
+      <p>Manage your customers, leads, and sales smarter.</p>
+    </div>
+
+    <div class="features">
+      <div class="feature-item">
+        <div class="feature-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <div>
+          <h3>Lead Management</h3>
+          <p>Capture and track leads efficiently.</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <div>
+          <h3>Sales Pipeline</h3>
+          <p>Visualize deals and close faster.</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <div>
+          <h3>Insights &amp; Reports</h3>
+          <p>Make data-driven decisions.</p>
+        </div>
+      </div>
+
+      <div class="feature-item">
+        <div class="feature-icon">
+          <i class="fas fa-bolt"></i>
+        </div>
+        <div>
+          <h3>Automation</h3>
+          <p>Automate follow-ups and tasks.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>&copy; 2026 Cortracker CRM. All rights reserved.</footer>
+  </section>
+
+  <section class="login-right">
+    <div class="login-form-box">
+      <div class="login-avatar">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+
+      <h2>Sign In</h2>
+      <p class="subtitle">Enter your credentials to access your workspace</p>
+
+      <form (ngSubmit)="login()">
+        <div class="form-group">
+          <label for="username">Username</label>
+          <input
+            id="username"
+            type="text"
+            name="username"
+            [(ngModel)]="username"
+            placeholder="Username"
+            autocomplete="username"
+            required>
+        </div>
+
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password">Password</label>
+            <a class="forgot-link" routerLink="/forgot-password">Forgot Password?</a>
+          </div>
+          <input
+            id="password"
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="Password"
+            autocomplete="current-password"
+            required>
+        </div>
+
+        <button class="btn-signin" type="submit" [disabled]="loading">
+          {{ loading ? 'Signing in...' : 'Sign In' }}
+        </button>
+
+        <p class="error-message" *ngIf="errorMessage">{{ errorMessage }}</p>
+      </form>
+    </div>
+  </section>
+</div>

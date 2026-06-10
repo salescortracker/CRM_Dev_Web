@@ -1,0 +1,62 @@
+<div class="ops-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">Master data</p>
+      <h1>Master Data Management</h1>
+      <p>Maintain countries, states, industries, currencies, and departments used across tenants and CRM records.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="master-layout">
+    <aside class="panel">
+      <h2>Masters</h2>
+      <button
+        type="button"
+        class="master-tab"
+        *ngFor="let type of masterTypes"
+        [class.active]="activeType === type"
+        (click)="selectType(type)">
+        {{ type }}
+        <span>{{ getTypeCount(type) }}</span>
+      </button>
+    </aside>
+
+    <section class="panel">
+      <div class="section-heading">
+        <h2>{{ activeType }}</h2>
+        <span>{{ filteredRecords.length }} values</span>
+      </div>
+      <div class="add-row">
+        <input class="form-control" [(ngModel)]="newName" placeholder="Name">
+        <input class="form-control" [(ngModel)]="newCode" placeholder="Code">
+        <button class="btn btn-danger" type="button" (click)="addRecord()">Add</button>
+      </div>
+      <article class="record-row" *ngFor="let record of filteredRecords" [class.active]="selectedRecordId === record.id" (click)="selectedRecordId = record.id">
+        <div>
+          <strong>{{ record.name }}</strong>
+          <span>{{ record.code }} | {{ record.usedIn }}</span>
+        </div>
+        <b [class.inactive]="record.status === 'Inactive'">{{ record.status }}</b>
+      </article>
+    </section>
+
+    <section class="panel detail-panel" *ngIf="selectedRecord">
+      <p class="eyebrow">{{ selectedRecord.type }}</p>
+      <h2>{{ selectedRecord.name }}</h2>
+      <label>Name<input class="form-control" [(ngModel)]="selectedRecord.name"></label>
+      <label>Code<input class="form-control" [(ngModel)]="selectedRecord.code"></label>
+      <label>Used in<textarea class="form-control" rows="3" [(ngModel)]="selectedRecord.usedIn"></textarea></label>
+      <div class="detail-grid">
+        <div><span>Status</span><strong>{{ selectedRecord.status }}</strong></div>
+        <div><span>Updated by</span><strong>{{ selectedRecord.updatedBy }}</strong></div>
+      </div>
+      <div class="action-row">
+        <button class="btn btn-danger" type="button" (click)="saveSelected()">Save</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="toggleStatus(selectedRecord)">
+          {{ selectedRecord.status === 'Active' ? 'Deactivate' : 'Activate' }}
+        </button>
+      </div>
+    </section>
+  </div>
+</div>

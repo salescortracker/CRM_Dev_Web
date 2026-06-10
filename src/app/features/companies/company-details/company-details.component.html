@@ -1,0 +1,123 @@
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-8">
+      <h2>{{ company?.name }}</h2>
+      <div class="text-muted">
+        <span *ngIf="company?.accountStatus" class="badge" [class]="'bg-' + getStatusColor(company?.accountStatus)">
+          {{ company?.accountStatus }}
+        </span>
+      </div>
+    </div>
+    <div class="col-4 text-end">
+      <button class="btn btn-primary me-2" (click)="editCompany()">
+        <i class="fas fa-edit me-2"></i>Edit Company
+      </button>
+      <button class="btn btn-secondary" (click)="viewAll()">
+        <i class="fas fa-users me-2"></i>View Contacts
+      </button>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Company Information</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Website:</strong> <a [href]="company?.website" target="_blank">{{ company?.website }}</a></p>
+          <p><strong>Industry:</strong> {{ company?.industry }}</p>
+          <p><strong>Company Size:</strong> {{ company?.companySize }}</p>
+          <p><strong>Annual Revenue:</strong> ${{ company?.annualRevenue | number }}</p>
+          <p><strong>Phone:</strong> {{ company?.phone }}</p>
+          <p><strong>Email:</strong> {{ company?.email }}</p>
+          <p><strong>Account Manager:</strong> {{ company?.accountManager }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Credit Information</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Credit Limit:</strong> \${{ company?.creditLimit | number }}</p>
+          <p><strong>Credit Used:</strong> \${{ company?.creditUsed | number }}</p>
+          <div class="mb-3">
+            <div class="progress">
+              <div class="progress-bar" [style.width]="getCreditUsagePercent() + '%'" [class]="getCreditUsageColor()"></div>
+            </div>
+          </div>
+          <p class="text-muted">
+            Available Credit: \${{ getAvailableCredit() | number }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-light">
+          <h5 class="mb-0">Account Activity Summary</h5>
+        </div>
+        <div class="card-body">
+          <div class="row text-center">
+            <!-- <div class="col-md-2" *ngFor="let metric of [
+              { label: 'Total Interactions', value: activity?.totalInteractions },
+              { label: 'Emails Sent', value: activity?.emailsSent },
+              { label: 'Calls Made', value: activity?.callsMade },
+              { label: 'Meetings', value: activity?.meetingsScheduled },
+              { label: 'Tasks Completed', value: activity?.tasksCompleted },
+              { label: 'Open Tasks', value: activity?.openTasks }
+            ]"> -->
+            <!-- <div class="row text-center"> -->
+            <div class="col-md-2" *ngFor="let metric of metrics">
+              <div class="metric">
+                <div class="metric-value">{{ activity?.[metric.key] }}</div>
+                <div class="metric-label">{{ metric.label }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- </div> -->
+          <p class="text-muted mt-3 mb-0">
+            Last Interaction: {{ activity?.lastInteractionDate | date }}
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Addresses</h5>
+          <button class="btn btn-sm btn-primary" (click)="addAddress()">Add Address</button>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6" *ngFor="let address of company?.addresses">
+              <div class="address-card mb-3 p-3 border rounded">
+                <div class="d-flex justify-content-between mb-2">
+                  <strong>{{ address.type | titlecase }}</strong>
+                  <span *ngIf="address.isDefault" class="badge bg-info">Default</span>
+                </div>
+                <p class="mb-1">{{ address.street }}</p>
+                <p class="mb-1">{{ address.city }}, {{ address.state }} {{ address.zipCode }}</p>
+                <p class="mb-3">{{ address.country }}</p>
+                <div class="btn-group btn-group-sm">
+                  <button class="btn btn-outline-secondary" (click)="editAddress(address)">Edit</button>
+                  <button class="btn btn-outline-danger" (click)="deleteAddress(address.id)">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

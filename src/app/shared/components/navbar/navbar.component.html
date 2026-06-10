@@ -1,0 +1,99 @@
+<aside class="sidebar" [class.collapsed]="sidebarCollapsed" *ngIf="isLoggedIn">
+  <div class="sidebar-brand">
+    <a class="brand-link" [routerLink]="['/dashboard']" title="CRM System">
+      <span class="brand-logo"><i class="fas fa-chart-line"></i></span>
+      <span class="brand-name">CRM System</span>
+    </a>
+    <button class="sidebar-toggle" type="button" (click)="toggleSidebar()" title="Open or close sidebar">
+      <i class="fas fa-bars"></i>
+    </button>
+  </div>
+
+  <nav class="sidebar-scroll">
+    <div class="nav-section">
+      <p class="sidebar-section-label">CRM Flow</p>
+      <a
+        class="nav-item"
+        *ngFor="let item of menuItems"
+        [hidden]="!shouldShowMenu(item)"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [title]="item.label">
+        <i [class]="'fas icon ' + item.icon"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    </div>
+
+    <div class="nav-section admin-section">
+      <p class="sidebar-section-label">SaaS Admin</p>
+      <a
+        class="nav-item"
+        *ngFor="let item of adminMenuItems"
+        [hidden]="!shouldShowMenu(item)"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [routerLinkActiveOptions]="{ exact: true }"
+        [title]="item.label">
+        <i [class]="'fas icon ' + item.icon"></i>
+        <span>{{ item.label }}</span>
+      </a>
+    </div>
+  </nav>
+</aside>
+
+<div class="top-chrome" [class.collapsed]="sidebarCollapsed" *ngIf="isLoggedIn">
+  <div class="status-bar">
+    <div class="status-items">
+      <span><strong>Status:</strong> Active</span>
+      <span><strong>Last Update:</strong> Just now</span>
+      <span><strong>Pipeline Value:</strong> $500,000</span>
+    </div>
+  </div>
+
+  <header class="app-header">
+    <div class="header-title">
+      <span>CRM Workspace</span>
+    </div>
+
+    <div class="header-actions">
+      <div class="search-box">
+        <i class="fas fa-search search-icon"></i>
+        <input type="search" placeholder="Search CRM">
+      </div>
+
+      <a routerLink="/integrations" class="icon-btn" title="Integrations">
+        <i class="fas fa-link"></i>
+      </a>
+
+      <a routerLink="/notifications" class="icon-btn" title="Notifications">
+        <i class="fas fa-bell"></i>
+        <span class="badge">3</span>
+      </a>
+
+      <a routerLink="/email-management" class="icon-btn" title="Email Management">
+        <i class="fas fa-envelope"></i>
+        <span class="badge">2</span>
+      </a>
+
+      <button class="icon-btn" type="button" (click)="toggleTheme()" [title]="isDark ? 'Use light mode' : 'Use dark mode'">
+        <i class="fas" [ngClass]="isDark ? 'fa-sun' : 'fa-moon'"></i>
+      </button>
+
+      <div class="user-menu dropdown">
+        <button class="user-btn dropdown-toggle" type="button" data-bs-toggle="dropdown">
+          <span class="user-copy">Welcome, {{ currentUser.firstName }} {{ currentUser.lastName }} ({{ currentUser.role | titlecase }})</span>
+          <span class="avatar">{{ userInitials }}</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" routerLink="/profile">My Profile</a></li>
+          <li><a class="dropdown-item" routerLink="/settings">Settings</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li>
+            <button class="dropdown-item" type="button" (click)="logout(); $event.preventDefault()">Logout</button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </header>
+</div>

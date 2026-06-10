@@ -1,0 +1,297 @@
+<div class="sub-page">
+  <div class="toast" *ngIf="activityMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ activityMessage }}
+  </div>
+
+  <div class="page-header">
+    <div>
+      <div class="breadcrumb">
+        <span>Super Admin</span>
+        <i class="fas fa-chevron-right"></i>
+        <span class="crumb-active">Subscriptions</span>
+      </div>
+      <h1 class="page-title">Billing &amp; Subscriptions</h1>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-outline" type="button" (click)="goToOrganizations()">
+        <i class="far fa-building"></i>
+        Organizations
+      </button>
+      <button class="btn btn-primary" type="button" (click)="openAddForm()">
+        <i class="fas fa-plus"></i>
+        New Subscription
+      </button>
+    </div>
+  </div>
+
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <span class="stat-icon tint-emerald"><i class="fas fa-check"></i></span>
+      <span><strong>{{ activeCount }}</strong><small>Active Subscriptions</small></span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-icon tint-blue"><i class="fas fa-bolt"></i></span>
+      <span><strong>{{ trialCount }}</strong><small>Trial Accounts</small></span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-icon tint-red"><i class="fas fa-exclamation-triangle"></i></span>
+      <span><strong>{{ failedPayments }}</strong><small>Failed Payments</small></span>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-icon tint-purple"><i class="fas fa-chart-line"></i></span>
+      <span><strong>{{ formatMoney(recurringRevenue) }}</strong><small>Recurring Revenue</small></span>
+    </div>
+  </div>
+
+  <div class="split">
+    <section class="list-card">
+      <div class="list-toolbar">
+        <div class="search-wrap">
+          <i class="fas fa-search search-icon"></i>
+          <input class="search-input" [(ngModel)]="search" placeholder="Search by company..." />
+        </div>
+        <select class="filter-select" [(ngModel)]="statusFilter">
+          <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+        </select>
+      </div>
+
+      <div class="list-head">
+        <span>Company / Plan</span>
+        <span class="text-right">Status / Amount</span>
+      </div>
+
+      <div class="list-body">
+        <button
+          class="list-row"
+          type="button"
+          *ngFor="let subscription of filteredSubscriptions; trackBy: trackBySubscriptionId"
+          [class.row-active]="selectedId === subscription.id"
+          (click)="selectSubscription(subscription)">
+          <span class="row-left">
+            <span class="row-dot" [ngClass]="statusDot[subscription.status]"></span>
+            <span class="row-text">
+              <strong class="row-company" [class.text-primary]="selectedId === subscription.id">{{ subscription.company }}</strong>
+              <small class="row-plan">
+                {{ subscription.plan }}
+                <ng-container *ngIf="subscription.autoRenew">
+                  <span class="dot-sep">|</span>
+                  <i class="fas fa-sync-alt"></i>
+                </ng-container>
+              </small>
+            </span>
+          </span>
+          <span class="row-right">
+            <span class="chip" [ngClass]="statusRing[subscription.status]">{{ subscription.status }}</span>
+            <strong class="row-amount">{{ priceLabel(subscription) }}</strong>
+          </span>
+        </button>
+
+        <div class="empty-list" *ngIf="filteredSubscriptions.length === 0">
+          <i class="far fa-credit-card"></i>
+          <p>No subscriptions found.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-col">
+      <div class="form-card" *ngIf="showForm">
+        <div class="form-header">
+          <div>
+            <h2>{{ isEditing ? 'Edit Subscription' : 'New Subscription' }}</h2>
+            <p>{{ isEditing ? 'Update subscription details.' : 'Create a subscription for a tenant.' }}</p>
+          </div>
+          <button class="icon-btn" type="button" (click)="cancelForm()"><i class="fas fa-times"></i></button>
+        </div>
+
+        <div class="form-body">
+          <label class="field">
+            <span>Company *</span>
+            <input [(ngModel)]="form.company" placeholder="Acme Corporation" />
+          </label>
+
+          <div class="grid-2">
+            <label class="field">
+              <span>Plan</span>
+              <select [ngModel]="form.plan" (ngModelChange)="onPlanChange($event)">
+                <option *ngFor="let plan of planOrder" [value]="plan">{{ plan }} - {{ formatMoney(planPrice[plan]) }}/mo</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Billing Cycle</span>
+              <select [(ngModel)]="form.billing">
+                <option *ngFor="let billing of billings" [value]="billing">{{ billing }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Status</span>
+              <select [(ngModel)]="form.status">
+                <option *ngFor="let status of statuses" [value]="status" [disabled]="status === 'All'">{{ status }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Payment Status</span>
+              <select [(ngModel)]="form.paymentStatus">
+                <option *ngFor="let payment of paymentStatuses" [value]="payment">{{ payment }}</option>
+              </select>
+            </label>
+            <label class="field">
+              <span>Expiry Date</span>
+              <input type="date" [(ngModel)]="form.expiryDate" />
+            </label>
+            <label class="field">
+              <span>Amount (INR)</span>
+              <input type="number" [(ngModel)]="form.amount" />
+            </label>
+            <label class="field">
+              <span>Seats</span>
+              <input type="number" [(ngModel)]="form.seats" />
+            </label>
+          </div>
+
+          <label class="checkbox-row">
+            <input type="checkbox" [(ngModel)]="form.autoRenew" />
+            <span>
+              <strong>Auto Renewal</strong>
+              <small>Automatically renew on expiry.</small>
+            </span>
+          </label>
+        </div>
+
+        <div class="form-footer">
+          <button class="btn btn-primary" type="button" (click)="saveSubscription()">
+            <i class="far fa-save"></i>
+            {{ isEditing ? 'Save Changes' : 'Create' }}
+          </button>
+          <button class="btn btn-outline" type="button" (click)="cancelForm()">Cancel</button>
+        </div>
+      </div>
+
+      <ng-container *ngIf="!showForm && selectedSubscription as subscription">
+        <div class="detail-stack">
+          <div class="hero" [ngClass]="planGradient[subscription.plan]">
+            <span class="hero-blob blob-1"></span>
+            <span class="hero-blob blob-2"></span>
+            <div class="hero-top">
+              <div>
+                <p class="hero-plan">
+                  <i class="fas" [ngClass]="subscription.plan === 'Enterprise' ? 'fa-crown' : 'fa-layer-group'"></i>
+                  {{ subscription.plan }} Plan | {{ subscription.billing }}
+                </p>
+                <h2>{{ subscription.company }}</h2>
+                <p class="hero-price">
+                  <strong>{{ subscription.amount === 0 ? 'Trial' : formatMoney(subscription.amount) }}</strong>
+                  <span *ngIf="subscription.amount > 0">/ {{ subscription.billing === 'Annual' ? 'year' : 'month' }}</span>
+                </p>
+              </div>
+              <div class="hero-badges">
+                <span class="hero-status">
+                  <span class="hero-status-dot" [ngClass]="statusDot[subscription.status]"></span>
+                  {{ subscription.status }}
+                </span>
+                <span class="hero-renew">
+                  <i class="fas fa-sync-alt"></i>
+                  Auto-renew {{ subscription.autoRenew ? 'On' : 'Off' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="timeline">
+              <div class="timeline-labels">
+                <span>Started {{ formatDate(subscription.startedDate) }}</span>
+                <span>Expires {{ formatDate(subscription.expiryDate) }}</span>
+              </div>
+              <div class="timeline-track">
+                <span class="timeline-fill" [style.width.%]="cycleProgress"></span>
+              </div>
+              <p class="timeline-warn" *ngIf="subscription.status !== 'Cancelled' && expiryDays >= 0 && expiryDays <= 30">
+                <i class="fas fa-exclamation-triangle"></i>
+                Renews/expires in {{ expiryDays }} days
+              </p>
+              <p class="timeline-warn warn-strong" *ngIf="expiryDays < 0 && subscription.status !== 'Cancelled'">
+                <i class="fas fa-exclamation-triangle"></i>
+                Expired {{ -expiryDays }} days ago
+              </p>
+            </div>
+          </div>
+
+          <div class="facts-card">
+            <div class="facts-header">
+              <p>Subscription Details</p>
+              <div class="facts-actions">
+                <button class="btn btn-ghost btn-sm" type="button" (click)="goToOrganizations()">
+                  <i class="far fa-building"></i>
+                  Tenant
+                </button>
+                <button class="btn btn-outline btn-sm" type="button" (click)="openEditForm(subscription)">
+                  <i class="far fa-edit"></i>
+                  Edit
+                </button>
+              </div>
+            </div>
+            <div class="facts-grid">
+              <div class="fact"><span>Company</span><strong>{{ subscription.company }}</strong></div>
+              <div class="fact"><span>Plan</span><strong>{{ subscription.plan }}</strong></div>
+              <div class="fact"><span>Expiry Date</span><strong>{{ formatDate(subscription.expiryDate) }}</strong></div>
+              <div class="fact"><span>Amount</span><strong>{{ subscription.amount === 0 ? 'Trial' : priceLabel(subscription) }}</strong></div>
+              <div class="fact"><span>Payment</span><strong>{{ subscription.paymentStatus }}</strong></div>
+              <div class="fact"><span>Seats</span><strong>{{ subscription.seats }}</strong></div>
+            </div>
+          </div>
+
+          <div class="dual-row">
+            <button class="toggle-card" type="button" [class.toggle-on]="subscription.autoRenew" (click)="toggleAutoRenew(subscription)">
+              <i class="fas fa-sync-alt"></i>
+              <span class="toggle-text">
+                <strong>Auto Renewal</strong>
+                <small>{{ subscription.autoRenew ? 'Enabled' : 'Disabled' }} - tap to toggle</small>
+              </span>
+              <span class="switch" [class.switch-on]="subscription.autoRenew"><span></span></span>
+            </button>
+
+            <div class="payment-card">
+              <i class="far fa-file-alt"></i>
+              <span class="toggle-text">
+                <strong>Payment Status</strong>
+                <small>Latest invoice state</small>
+              </span>
+              <span class="chip" [ngClass]="paymentRing[subscription.paymentStatus]">{{ subscription.paymentStatus }}</span>
+            </div>
+          </div>
+
+          <div class="toolbar-card">
+            <p>Manage Subscription</p>
+            <div class="toolbar-grid">
+              <button class="action-btn act-emerald" type="button" (click)="renew(subscription)">
+                <i class="fas fa-sync-alt"></i>
+                <span>Renew</span>
+              </button>
+              <button class="action-btn act-primary" type="button" (click)="upgrade(subscription)">
+                <i class="fas fa-arrow-up"></i>
+                <span>Upgrade</span>
+              </button>
+              <button class="action-btn act-blue" type="button" (click)="downgrade(subscription)">
+                <i class="fas fa-arrow-down"></i>
+                <span>Downgrade</span>
+              </button>
+              <button class="action-btn act-amber" type="button" (click)="suspend(subscription)">
+                <i class="fas fa-pause"></i>
+                <span>Suspend</span>
+              </button>
+            </div>
+            <button class="plans-link" type="button" (click)="goToPlans()">
+              View full plan catalog
+              <i class="fas fa-arrow-up-right-from-square"></i>
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <div class="empty-detail" *ngIf="!showForm && !selectedSubscription">
+        <i class="far fa-credit-card"></i>
+        <p>Select a subscription</p>
+        <small>Pick a tenant from the list to view billing details.</small>
+      </div>
+    </section>
+  </div>
+</div>

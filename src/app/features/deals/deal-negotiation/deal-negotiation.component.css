@@ -1,0 +1,683 @@
+.negotiation-page {
+  min-height: calc(100vh - 120px);
+  padding: 20px 22px;
+  background: hsl(210 17% 96%);
+  color: var(--app-text, #0f1520);
+  font-size: 14px;
+}
+
+.page-header {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.page-header,
+.header-actions,
+.form-actions,
+.close-actions,
+.section-heading,
+.timeline-title,
+.schedule-panel-header,
+.warning-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.header-actions,
+.form-actions,
+.close-actions,
+.section-heading,
+.schedule-panel-header,
+.warning-head {
+  align-items: center;
+  justify-content: space-between;
+}
+
+h1,
+h2,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  color: var(--app-heading, #101828);
+  font-size: 1.55rem;
+  font-weight: 800;
+  margin: 8px 0 4px;
+}
+
+h2 {
+  color: var(--app-heading, #101828);
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.page-header p,
+.section-heading p,
+.timeline p,
+.timeline small,
+.selected-note-panel p,
+.counter-panel p,
+.summary-list span {
+  color: var(--app-muted, #697386);
+}
+
+.link-button,
+.connected-flow button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: var(--app-muted, #697386);
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 7px;
+  padding: 0;
+}
+
+.link-button:hover,
+.connected-flow button:hover {
+  color: #b91538;
+}
+
+.connected-flow,
+.snapshot-card,
+.action-panel,
+.note-panel,
+.timeline-panel {
+  background: var(--app-card-bg, #ffffff);
+  border: 1px solid var(--app-border, #dfe5ee);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.07), 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.status-pill {
+  align-items: center;
+  background: #ecfdf3;
+  border-radius: 999px;
+  color: #027a48;
+  display: inline-flex;
+  font-size: 12px;
+  font-weight: 800;
+  min-height: 26px;
+  padding: 4px 10px;
+}
+
+.connected-flow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 16px;
+  padding: 12px 20px;
+}
+
+.connected-flow span {
+  align-items: center;
+  background: rgba(185, 21, 56, 0.1);
+  border-radius: 999px;
+  color: #b91538;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 7px;
+  padding: 6px 12px;
+}
+
+.snapshot-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-bottom: 18px;
+}
+
+.snapshot-card {
+  padding: 16px 18px;
+}
+
+.snapshot-card span,
+.summary-list span,
+.selected-note-meta span {
+  color: var(--app-muted, #697386);
+  display: block;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.snapshot-card strong {
+  display: inline-flex;
+  font-size: 1.2rem;
+  margin-top: 6px;
+}
+
+.workspace-grid {
+  align-items: start;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: minmax(0, 2fr) minmax(320px, 1fr);
+}
+
+.timeline-column,
+.summary-column {
+  display: grid;
+  gap: 16px;
+}
+
+.action-panel,
+.note-panel,
+.timeline-panel {
+  padding: 20px;
+}
+
+.add-note-card .section-heading {
+  border-bottom: 1px solid var(--app-border, #edf1f5);
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+}
+
+.note-type-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.note-type-grid button {
+  background: var(--app-soft-bg, #f8fafc);
+  border: 1px solid var(--app-border, #dfe5ee);
+  border-radius: 999px;
+  color: var(--app-muted, #697386);
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 12px;
+}
+
+.note-type-grid button.active {
+  background: #b91538;
+  border-color: #b91538;
+  color: #fff;
+}
+
+.note-form label,
+.counter-panel label {
+  color: var(--app-text, #0f1520);
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.form-control {
+  background: var(--app-card-bg, #ffffff);
+  border-color: var(--app-border, #d8dee8);
+  border-radius: 8px;
+  color: var(--app-text, #0f1520);
+  font-size: 13px;
+  margin-top: 6px;
+  min-height: 36px;
+}
+
+.timeline {
+  display: grid;
+  gap: 18px;
+  padding-left: 4px;
+  position: relative;
+}
+
+.timeline:before {
+  background: var(--app-border, #edf1f5);
+  bottom: 0;
+  content: "";
+  left: 13px;
+  position: absolute;
+  top: 0;
+  width: 1px;
+}
+
+.timeline-item {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 26px minmax(0, 1fr);
+  position: relative;
+}
+
+.timeline-icon {
+  background: var(--app-card-bg, #ffffff);
+  border: 3px solid #b91538;
+  border-radius: 999px;
+  height: 20px;
+  margin: 14px auto 0;
+  width: 20px;
+  z-index: 1;
+}
+
+.timeline-icon.status-accepted {
+  background: #027a48;
+  border-color: #027a48;
+}
+
+.timeline-icon.status-rejected {
+  background: #b42318;
+  border-color: #b42318;
+}
+
+.timeline-icon.status-counter_proposed {
+  background: #2454a6;
+  border-color: #2454a6;
+}
+
+.timeline-card {
+  background: var(--app-card-bg, #ffffff);
+  border: 1px solid var(--app-border, #e3e8ef);
+  border-radius: 12px;
+  padding: 14px;
+}
+
+.timeline-item.clickable {
+  cursor: pointer;
+}
+
+.timeline-item.clickable:hover .timeline-card,
+.timeline-item.active .timeline-card {
+  border-color: rgba(185, 21, 56, 0.28);
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+}
+
+.timeline-title {
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.response-text {
+  background: var(--app-soft-bg, #f8fafc);
+  border: 1px solid var(--app-border, #dfe5ee);
+  border-radius: 8px;
+  margin-top: 10px;
+  padding: 10px;
+}
+
+.action-button {
+  align-items: center;
+  background: var(--app-card-bg, #ffffff);
+  border: 1px solid var(--app-border, #e3e8ef);
+  border-radius: 8px;
+  color: var(--app-text, #0f1520);
+  display: flex;
+  font-size: 13px;
+  font-weight: 800;
+  gap: 12px;
+  margin-bottom: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  text-align: left;
+  width: 100%;
+}
+
+.action-button:hover {
+  border-color: rgba(185, 21, 56, 0.32);
+  color: #b91538;
+}
+
+.action-button i {
+  color: #b91538;
+}
+
+.selected-note-meta,
+.summary-list div {
+  align-items: center;
+  border-bottom: 1px solid var(--app-border, #edf1f5);
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+}
+
+.selected-note-meta strong,
+.summary-list strong {
+  color: var(--app-heading, #101828);
+}
+
+.note-action-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.schedule-panel {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.schedule-panel-header p {
+  margin-bottom: 0;
+}
+
+.inline-meeting-warning {
+  background: #fff8e6;
+  border: 1px solid #fedf89;
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+}
+
+.warning-head {
+  color: #8a4b00;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.warning-head button {
+  background: transparent;
+  border: 0;
+  color: #b91538;
+  font-weight: 800;
+}
+
+.warning-meeting-row {
+  border-top: 1px solid #fedf89;
+  display: grid;
+  gap: 2px;
+  padding-top: 8px;
+}
+
+.warning-meeting-row span {
+  color: #667085;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.meeting-provider-grid {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.meeting-provider {
+  background: var(--app-card-bg, #ffffff);
+  border: 1px solid var(--app-border, #d8dee8);
+  border-radius: 10px;
+  color: var(--app-text, #0f1520);
+  display: grid;
+  font-weight: 800;
+  gap: 3px;
+  min-height: 72px;
+  place-items: center;
+}
+
+.meeting-provider i {
+  color: #b91538;
+}
+
+.meeting-provider small {
+  color: var(--app-muted, #697386);
+  font-size: 11px;
+}
+
+.meeting-provider.active {
+  background: rgba(185, 21, 56, 0.08);
+  border-color: #b91538;
+  color: #b91538;
+}
+
+.meeting-provider.disabled {
+  opacity: 0.55;
+}
+
+.schedule-form-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.empty-state,
+.loading-state {
+  align-items: center;
+  color: var(--app-muted, #697386);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  min-height: 160px;
+}
+
+.btn {
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  min-height: 36px;
+}
+
+.btn-danger {
+  background: #b91538;
+  border-color: #b91538;
+}
+
+/* Reference Negotiation redesign */
+.reference-negotiation-page {
+  max-width: 1500px;
+  margin: 0 auto;
+}
+
+.reference-negotiation-header {
+  margin-bottom: 22px;
+}
+
+.negotiation-title-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.negotiation-title-row h1 {
+  margin: 0;
+}
+
+.deal-avatar {
+  align-items: center;
+  background: #f59e0b;
+  border-radius: 6px;
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 800;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.reference-negotiation-page .connected-flow {
+  margin-bottom: 24px;
+  min-height: 58px;
+  padding: 14px 24px;
+}
+
+.reference-hidden-snapshot {
+  display: none;
+}
+
+.reference-negotiation-page .workspace-grid {
+  grid-template-columns: minmax(0, 2fr) minmax(330px, 0.95fr);
+}
+
+.reference-negotiation-page .note-panel,
+.reference-negotiation-page .timeline-panel,
+.reference-negotiation-page .action-panel {
+  padding: 22px;
+}
+
+.reference-negotiation-page .section-heading {
+  border-bottom: 0;
+  margin-bottom: 14px;
+}
+
+.reference-negotiation-page .add-note-card {
+  min-height: 236px;
+}
+
+.reference-negotiation-page .note-type-grid button {
+  border-radius: 999px;
+  color: var(--app-heading, #101828);
+  min-width: 74px;
+}
+
+.reference-negotiation-page .note-type-grid button.active {
+  background: #b91538;
+  border-color: #b91538;
+  color: #ffffff;
+}
+
+.reference-negotiation-page .note-form label {
+  margin-bottom: 10px;
+}
+
+.reference-negotiation-page .reference-compact-field {
+  display: none;
+}
+
+.reference-negotiation-page .note-form textarea {
+  background: var(--app-soft-bg, #f8fafc);
+  min-height: 82px;
+}
+
+.reference-negotiation-page .form-actions {
+  justify-content: flex-start;
+}
+
+.reference-negotiation-page .timeline {
+  gap: 24px;
+}
+
+.reference-negotiation-page .timeline:before {
+  left: 17px;
+}
+
+.reference-negotiation-page .timeline-item {
+  grid-template-columns: 34px minmax(0, 1fr);
+}
+
+.reference-negotiation-page .timeline-icon {
+  background: var(--app-soft-bg, #f8fafc);
+  border: 0;
+  height: 28px;
+  margin-top: 18px;
+  position: relative;
+  width: 28px;
+}
+
+.reference-negotiation-page .timeline-icon::before {
+  color: var(--app-muted, #697386);
+  content: "\f017";
+  font-family: "Font Awesome 5 Free";
+  font-size: 12px;
+  font-weight: 900;
+  left: 50%;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.reference-negotiation-page .timeline-icon.status-proposed,
+.reference-negotiation-page .timeline-icon.status-accepted {
+  background: #dbeafe;
+}
+
+.reference-negotiation-page .timeline-icon.status-counter_proposed {
+  background: #fef3c7;
+}
+
+.reference-negotiation-page .timeline-card {
+  background: var(--app-soft-bg, #f8fafc);
+  border-style: solid;
+  padding: 18px;
+}
+
+.timeline-note-type {
+  background: #e2e8f0;
+  border-radius: 999px;
+  color: #475569;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 800;
+  margin-right: 10px;
+  padding: 4px 8px;
+  text-transform: uppercase;
+}
+
+.reference-negotiation-page .timeline-card p {
+  color: var(--app-muted, #697386);
+  font-size: 15px;
+  margin: 12px 0 0;
+}
+
+.reference-negotiation-page .response-text {
+  border: 0;
+  color: #b91538;
+  font-size: 1rem;
+  font-weight: 800;
+  padding-left: 0;
+}
+
+.reference-negotiation-page .summary-list div {
+  min-height: 40px;
+}
+
+.quote-actions-panel .action-button {
+  justify-content: flex-start;
+  margin-bottom: 8px;
+}
+
+.quote-actions-panel .primary-action {
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+.quote-actions-panel .primary-action i {
+  color: #2563eb;
+}
+
+.selected-note-panel {
+  display: block;
+}
+
+:host-context(.dark) .negotiation-page {
+  background: var(--app-bg, #111827);
+}
+
+@media (max-width: 1180px) {
+  .workspace-grid,
+  .snapshot-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .timeline-column {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .negotiation-page {
+    padding: 14px;
+  }
+
+  .page-header,
+  .header-actions,
+  .section-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .workspace-grid,
+  .snapshot-grid,
+  .meeting-provider-grid,
+  .schedule-form-grid,
+  .note-action-grid {
+    grid-template-columns: 1fr;
+  }
+}

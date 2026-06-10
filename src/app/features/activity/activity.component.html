@@ -1,0 +1,73 @@
+<div class="activity-page">
+  <div class="page-header">
+    <div>
+      <p class="eyebrow">CRM timeline</p>
+      <h1>Activity</h1>
+      <p class="page-subtitle">See the client demo story from lead action through quote, negotiation, task, and closure.</p>
+    </div>
+    <span class="status-pill" *ngIf="activityMessage">{{ activityMessage }}</span>
+  </div>
+
+  <div class="summary-grid">
+    <div><span>Open review</span><strong>{{ pendingCount }}</strong></div>
+    <div><span>Completed</span><strong>{{ completedCount }}</strong></div>
+    <div><span>Deal activity</span><strong>{{ dealActivityCount }}</strong></div>
+  </div>
+
+  <div class="toolbar">
+    <select class="form-control" [(ngModel)]="filterStatus">
+      <option value="">All Statuses</option>
+      <option value="Pending">Pending</option>
+      <option value="Needs Review">Needs Review</option>
+      <option value="Completed">Completed</option>
+    </select>
+    <select class="form-control" [(ngModel)]="filterType">
+      <option value="">All Types</option>
+      <option value="Lead">Lead</option>
+      <option value="Deal">Deal</option>
+      <option value="Quote">Quote</option>
+      <option value="Negotiation">Negotiation</option>
+      <option value="Task">Task</option>
+      <option value="Company">Company</option>
+    </select>
+  </div>
+
+  <div class="activity-layout">
+    <section class="timeline-panel">
+      <article
+        class="activity-item"
+        *ngFor="let activity of filteredActivities"
+        [class.active]="selectedActivity?.id === activity.id"
+        (click)="selectActivity(activity)">
+        <span class="activity-icon"><i class="fas" [ngClass]="getTypeIcon(activity.type)"></i></span>
+        <div>
+          <div class="item-heading">
+            <strong>{{ activity.title }}</strong>
+            <span class="status-badge" [ngClass]="getStatusClass(activity.status)">{{ activity.status }}</span>
+          </div>
+          <p>{{ activity.note }}</p>
+          <small>{{ activity.relatedName }} • {{ activity.owner }} • {{ activity.date }}</small>
+        </div>
+      </article>
+    </section>
+
+    <aside class="detail-panel" *ngIf="selectedActivity">
+      <p class="eyebrow">{{ selectedActivity.type }}</p>
+      <h2>{{ selectedActivity.title }}</h2>
+      <p>{{ selectedActivity.note }}</p>
+      <div class="detail-grid">
+        <div><span>Related</span><strong>{{ selectedActivity.relatedName }}</strong></div>
+        <div><span>Owner</span><strong>{{ selectedActivity.owner }}</strong></div>
+        <div><span>Status</span><strong>{{ selectedActivity.status }}</strong></div>
+        <div><span>Date</span><strong>{{ selectedActivity.date }}</strong></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-danger" type="button" (click)="openNext(selectedActivity)">Open Next Step</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="openRelated(selectedActivity)">Open Related</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="logCall(selectedActivity)">Log Call</button>
+        <button class="btn btn-outline-secondary" type="button" (click)="createFollowUp(selectedActivity)">Create Follow-up</button>
+        <button class="btn btn-success" type="button" (click)="markComplete(selectedActivity)">Mark Complete</button>
+      </div>
+    </aside>
+  </div>
+</div>
